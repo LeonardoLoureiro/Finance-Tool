@@ -1,10 +1,9 @@
+import { Header } from "@/components/Header";
+import { cn } from "@/lib/utils";
+import { ClerkProvider } from '@clerk/nextjs';
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
-import { cn } from "@/lib/utils";
-import { ClerkProvider, Show, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
-import Image from "next/image";
-import { HeaderUserButton } from "@/components/HeaderUserButton";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -42,14 +41,7 @@ export default function RootLayout({
         )}
       >
         <body className="min-h-full flex flex-col">
-          <header className="flex items-center justify-between px-6 py-4 h-16 border-b border-slate-200 bg-white/60 backdrop-blur">
-
-            <div className="font-semibold text-slate-900">
-              <Image src="/logo.svg" alt="Logo" width={32} height={32} className="inline-block mr-2" />
-              FinanceApp
-            </div>
-            <HeaderUserButton />
-          </header>
+          <Header />
 
           {children}
         </body>
