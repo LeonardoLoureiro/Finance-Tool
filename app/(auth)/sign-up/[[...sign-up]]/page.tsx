@@ -1,16 +1,5 @@
-import { Button } from "@/components/ui/button";
+import { SignUp } from '@clerk/nextjs'
 
-const SignUp = () => {
-  return (
-    <div>
-      <h1>Sign Up</h1>
-      <form>
-        <input type="email" placeholder="Email" />
-        <input type="password" placeholder="Password" />
-        <Button>Sign Up</Button>
-      </form>
-    </div>
-  );
-};
-
-export default SignUp;
+export default function Page() {
+  return <SignUp path="/sign-up" />
+}
