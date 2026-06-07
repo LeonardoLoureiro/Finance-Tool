@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { ClerkProvider, Show, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
+import Image from "next/image";
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'});
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,15 +24,34 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html
-      lang="en"
-      className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", inter.variable)}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
-    </html>
+    <ClerkProvider>
+      <html
+        lang="en"
+        className={cn(
+          "h-full",
+          "antialiased",
+          geistSans.variable,
+          geistMono.variable,
+          "font-sans",
+          inter.variable
+        )}
+      >
+        <body className="min-h-full flex flex-col">
+          <header className="flex items-center justify-between px-6 py-4 h-16 border-b border-slate-200 bg-white/60 backdrop-blur">
+
+            <div className="font-semibold text-slate-900">
+              <Image src="/logo.svg" alt="Logo" width={32} height={32} className="inline-block mr-2" />
+              FinanceApp
+            </div>
+          </header>
+
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
