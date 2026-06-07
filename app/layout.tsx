@@ -4,6 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ClerkProvider, Show, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
 import Image from "next/image";
+import { HeaderUserButton } from "@/components/HeaderUserButton";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -47,6 +48,7 @@ export default function RootLayout({
               <Image src="/logo.svg" alt="Logo" width={32} height={32} className="inline-block mr-2" />
               FinanceApp
             </div>
+            <HeaderUserButton />
           </header>
 
           {children}
