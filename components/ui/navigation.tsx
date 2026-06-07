@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { NavButton } from "@/components/nav-button";
+import { NavButton } from "./nav-button";
 
 const routes = [
   { label: "Home", href: "/" },

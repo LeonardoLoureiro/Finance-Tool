@@ -1,5 +1,5 @@
-import { Header } from "@/components/Header";
-import { ThemeProvider } from "@/components/ThemeProvider";
+import { Header } from "@/components/layout/Header";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { cn } from "@/lib/utils";
 import { ClerkProvider } from '@clerk/nextjs';
 import type { Metadata } from "next";

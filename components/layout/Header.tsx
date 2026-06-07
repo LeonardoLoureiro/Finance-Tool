@@ -4,7 +4,7 @@ import { UserButton } from '@clerk/nextjs';
 import { useAuth } from '@clerk/nextjs';
 import Image from "next/image";
 import Link from "next/link";
-import { Navigation } from "./ui/navigation";
+import { Navigation } from "@/components/ui/navigation";
 import { Menu } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 
