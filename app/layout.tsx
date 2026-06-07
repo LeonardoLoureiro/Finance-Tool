@@ -40,19 +40,11 @@ export default function RootLayout({
         )}
       >
         <body className="min-h-full flex flex-col">
-          <header className="flex justify-end items-center p-4 gap-4 h-16">
-            <Show when="signed-out">
-              <SignInButton />
-              <SignUpButton>
-                <button className="bg-[#6c47ff] text-white rounded-full font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 cursor-pointer">
-                  Sign Up
-                </button>
-              </SignUpButton>
-            </Show>
+          <header className="flex items-center justify-between px-6 py-4 h-16 border-b border-slate-200 bg-white/60 backdrop-blur">
 
-            <Show when="signed-in">
-              <UserButton />
-            </Show>
+            <div className="font-semibold text-slate-900">
+              FinanceApp
+            </div>
           </header>
 
           {children}
