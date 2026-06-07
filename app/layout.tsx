@@ -1,4 +1,5 @@
 import { Header } from "@/components/Header";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { cn } from "@/lib/utils";
 import { ClerkProvider } from '@clerk/nextjs';
 import type { Metadata } from "next";
@@ -29,23 +30,25 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-      <html
-        lang="en"
-        className={cn(
-          "h-full",
-          "antialiased",
-          geistSans.variable,
-          geistMono.variable,
-          "font-sans",
-          inter.variable
-        )}
-      >
-        <body className="min-h-full flex flex-col">
-          <Header />
+      <ThemeProvider>
+        <html
+          lang="en"
+          className={cn(
+            "h-full",
+            "antialiased",
+            geistSans.variable,
+            geistMono.variable,
+            "font-sans",
+            inter.variable
+          )}
+        >
+          <body className="min-h-full flex flex-col bg-white dark:bg-slate-950 text-slate-900 dark:text-white transition-colors duration-300">
+            <Header />
 
-          {children}
-        </body>
-      </html>
+            {children}
+          </body>
+        </html>
+      </ThemeProvider>
     </ClerkProvider>
   );
 }
