@@ -1,0 +1,1 @@
+A tool to see all your financial transactions and the general trend.
