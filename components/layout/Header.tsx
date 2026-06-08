@@ -25,12 +25,6 @@ export function Header() {
         {/* Navigation links which only show if user is signed in */}
         {isSignedIn && <Navigation />}
         
-        {/* Navigations menu for mobile user, also hidden unless user is signed in */}
-        {isSignedIn && (
-          <button className="lg:hidden p-2">
-            <Menu className="w-6 h-6 text-slate-900 dark:text-white" />
-          </button>
-        )}
       </div>
       
       {/* Header controls - Theme toggle and User button */}
