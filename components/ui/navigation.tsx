@@ -41,7 +41,7 @@ export const Navigation = () => {
           {routes.map((route) => (
             <Button
               key={route.href}
-              variant="ghost"
+              variant={route.href === pathname ? "secondary" : "ghost"}
               className="w-full justify-start"
               onClick={() => onClick(route.href)}
             >

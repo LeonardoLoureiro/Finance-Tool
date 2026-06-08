@@ -1,4 +1,4 @@
-import { Header } from "@/components/layout/Header";
+import { Header } from "@/components/header/Header";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { cn } from "@/lib/utils";
 import { ClerkProvider } from '@clerk/nextjs';

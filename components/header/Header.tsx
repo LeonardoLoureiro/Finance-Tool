@@ -1,15 +1,15 @@
 "use client";
 
-import { UserButton } from '@clerk/nextjs';
+import { ClerkLoaded, ClerkLoading, UserButton } from '@clerk/nextjs';
 import { useAuth } from '@clerk/nextjs';
 import Image from "next/image";
 import Link from "next/link";
 import { Navigation } from "@/components/ui/navigation";
-import { Menu } from "lucide-react";
-import { ThemeToggle } from "./ThemeToggle";
+import { Loader2, Menu } from "lucide-react";
+import { ThemeToggle } from "../layout/ThemeToggle";
 
 export function Header() {
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, isLoaded } = useAuth();
 
   return (
     <header className="flex items-center justify-between px-6 py-4 h-16 border-b border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-950/60 backdrop-blur transition-colors duration-300">
@@ -30,7 +30,10 @@ export function Header() {
       {/* Header controls - Theme toggle and User button */}
       <div className="flex items-center gap-4">
         <ThemeToggle />
-        {isSignedIn && <UserButton />}
+        {isLoaded ? 
+          <UserButton /> : 
+          <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+        }        
       </div>
     </header>
   );
