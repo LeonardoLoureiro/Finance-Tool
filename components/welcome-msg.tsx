@@ -8,7 +8,7 @@ export const WelcomeMsg = () => {
   return (
     <div>
       <h2>
-        Welcome Back{ isLoaded ? ", " : " " }{user?.firstName}👋
+        Welcome Back { isLoaded ? user?.firstName : "" }👋
       </h2>
 
       <p>
