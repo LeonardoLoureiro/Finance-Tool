@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { db } from "@/db/drizzle"
 import { accounts } from "@/db/schema";
 import { clerkMiddleware, getAuth } from "@hono/clerk-auth";
+import { HTTPException } from "hono/http-exception";
 
 const app = new Hono()
   .get("/" ,
@@ -9,8 +10,15 @@ const app = new Hono()
     async (context) => {
       const auth = getAuth(context);
 
+      // if user is not logged in, deny acccess.
       if (!auth?.userId) {
-        return context.json({ "error": "Unauthorised." }, 401);
+        // using HTTPException to throw an error with status code and message.
+        // Instead of using just json saying unauthorised, this would actually run into
+        // problems later since, for example, user-get-accounts is expecting output data to be 
+        // "id: string, name: string". But with unauthorised, it would not fit this structure.
+        throw new HTTPException(401, { 
+          res: context.json( { error: "Unauthorised."}, 401 )
+        });
       }
 
       const data = await db.select({
