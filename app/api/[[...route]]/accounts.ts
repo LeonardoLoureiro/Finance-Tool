@@ -9,7 +9,7 @@ const app = new Hono()
       name: accounts.name,
     }).from(accounts);
 
-    return context.json({ accounts: data });
+    return context.json({ data });
 });
 
 export default app;
