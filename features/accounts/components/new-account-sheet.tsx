@@ -6,14 +6,14 @@ import {
   SheetTitle
 } from "@/components/ui/sheet";
 
-import { useState } from "react";
+import { useNewAccount } from "../hooks/use-new-accounts";
 
 
 export const NewAccountSheet = () => {
-  const [open, setOpen] = useState(true);
+  const { isOpen, onClose } = useNewAccount();
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent className="space-y-4">
         <SheetHeader>
           <SheetTitle>
