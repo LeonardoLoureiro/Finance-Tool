@@ -9,7 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { insertAccountsSchema } from "@/db/schema";
+import { Trash } from "lucide-react";
 
+// just use the name, since we're only adding an account name.
 const formSchema = insertAccountsSchema.pick({
   name: true, 
 });
@@ -42,10 +44,10 @@ export const AccountForm = ({
 
   // when user presses submit, do this.
   const handleFormSubmit = (values: FormValues) => {
-    console.log({ values })
+    onSubmit(values);
   }
 
-  // 
+  //  delete account user specified.
   const handleDelete = () => {
     onDelete?.();
   };
@@ -75,6 +77,9 @@ export const AccountForm = ({
         )}
       </div>
 
+      {/* Using isSubmitting so to prevent user from creating multiple
+          of the same account. Since without it they can simply
+          click endlessly.  */}
       <Button
         type="submit"
         className="w-full rounded-md"
@@ -83,7 +88,7 @@ export const AccountForm = ({
         {id ? "Save Changes" : "Create Account"}
       </Button>
 
-      {id && (
+      {!!id && (
         <Button
           type="button"
           variant="destructive"
@@ -91,7 +96,8 @@ export const AccountForm = ({
           disabled={disabled || isSubmitting}
           onClick={handleDelete}
         >
-          Delete Account
+          <Trash className="size-4 mr-2" />
+          Delete Account 
         </Button>
       )}
     </form>
