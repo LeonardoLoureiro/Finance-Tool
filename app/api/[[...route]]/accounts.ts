@@ -2,10 +2,11 @@ import { db } from "@/db/drizzle";
 import { accounts, insertAccountsSchema } from "@/db/schema";
 import { clerkMiddleware, getAuth } from "@hono/clerk-auth";
 import { zValidator } from "@hono/zod-validator";
+import { createId } from "@paralleldrive/cuid2";
+import { and, eq, inArray } from "drizzle-orm/sql/expressions/conditions";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { createId } from "@paralleldrive/cuid2";
-import { convertSegmentPathToStaticExportFilename } from "next/dist/shared/lib/segment-cache/segment-value-encoding";
+import z from "zod";
 
 const app = new Hono()
   .get("/" ,
@@ -58,6 +59,42 @@ const app = new Hono()
           userId: auth.userId,
           ...values,
       }).returning();
+
+      return context.json({ data });
+    }
+  ).post(
+    "/bulk-delete",
+    clerkMiddleware(),
+    zValidator(
+      "json",
+      // defining our own,
+      // so this api will be expecting a json of IDs of account to delete in db.
+      z.object({
+        ids: z.array(z.string()),
+      }),
+    ),
+    async (context) => {
+      const auth = getAuth(context);
+      const values = context.req.valid("json");
+
+      // not logged in? DENIED
+      if (!auth?.userId) {
+        throw new HTTPException(401, { 
+          res: context.json( { error: "Unauthorised."}, 401 )
+        });
+      }
+      
+      const data = await db
+        .delete(accounts)
+        .where(
+          and(
+            eq(accounts.userId, auth.userId),
+            inArray(accounts.id, values.ids)
+          )
+        )
+        .returning({
+          id: accounts.id,
+        });
 
       return context.json({ data });
     }
