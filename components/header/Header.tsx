@@ -13,8 +13,8 @@ export function Header() {
   const { isSignedIn, isLoaded } = useAuth();
 
   return (
-    <div className="relative h-28 overflow-hidden  bg-white dark:bg-slate-950">
-      <header className="flex items-center justify-between px-6 py-4 h-16 border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-950/60 backdrop-blur transition-colors duration-300">
+    <div className="relative h-56 overflow-hidden">
+      <header className="flex items-center justify-between px-6 py-4 border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-950/60 backdrop-blur transition-colors duration-300">
         {/* Logo and Navigation */}
         <div className="flex items-center gap-6">
           <Link href="/">
@@ -39,7 +39,7 @@ export function Header() {
         </div>
       </header>
       {isSignedIn && (
-        <div className="px-6 pb-4">
+        <div className="px-6 py-6">
           <WelcomeMsg />
         </div>
       )}
