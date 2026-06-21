@@ -3,14 +3,33 @@
 import { Button } from "@/components/ui/button";
 import {
   Card,
+  CardContent,
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
 import { useNewAccount } from "@/features/accounts/hooks/use-new-accounts";
 import { Plus } from "lucide-react";
+import { columns, Payment } from "./columns";
+import { DataTable } from "@/components/data-table";
 
-const AccountsPage = () => {
+
+async function getData(): Promise<Payment[]> {
+  // Fetch data from your API here.
+  return [
+    {
+      id: "728ed52f",
+      amount: 100,
+      status: "pending",
+      email: "m@example.com",
+    },
+    // ...
+  ]
+}
+
+
+const AccountsPage = async () => {
   const newAccount = useNewAccount();
+  const data = await getData();
 
   return(
     <div className="mx-auto w-full max-w-7xl px-4 pb-10 -mt-5">
@@ -25,8 +44,12 @@ const AccountsPage = () => {
             <Plus className="size-4 mr-2"/>
             Add new
           </Button>
-        
         </CardHeader>
+
+        <CardContent>
+          <DataTable columns={columns} data={data} />
+        </CardContent>
+
       </Card>
     </div>
   );
