@@ -9,14 +9,18 @@ import {
   CardTitle
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useBulkDeleteAccounts } from "@/features/accounts/api/use-bulk-delete";
 import { useGetAccounts } from "@/features/accounts/api/user-get-accounts";
 import { useNewAccount } from "@/features/accounts/hooks/use-new-accounts";
+import { useConfirm } from "@/hooks/use-confirm";
 import { Loader2, Plus } from "lucide-react";
 import { columns } from "./columns";
-import { useBulkDeleteAccounts } from "@/features/accounts/api/use-bulk-delete";
 
 
 const AccountsPage = () => {
+  // you sure you want to delete?
+  const { confirm, ConfirmDialog } = useConfirm(); 
+
   const newAccount = useNewAccount();
 
   // delete accounts
@@ -68,13 +72,24 @@ const AccountsPage = () => {
             columns={columns} 
             data={accounts} 
             filterKey="name"
-            onDelete={(row) => {
-              const ids = row.map( (r) => r.original.id );
+            onDelete={async (rows) => {
+              // confirm with user they want to delete
+              const ok = await confirm({
+                title: "Delete accounts?",
+                description: `This will delete ${rows.length} account(s). This cannot be undone.`,
+              });
+
+              if (!ok) return;
+
+              const ids = rows.map((r) => r.original.id);
               deleteAccounts.mutate({ ids });
             }}
             disabled={disabled}
           />
         </CardContent>
+
+        {/* Are you SURE you want to delete these accounts? */}
+        {ConfirmDialog}
 
       </Card>
     </div>
