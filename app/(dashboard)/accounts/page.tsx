@@ -13,7 +13,7 @@ import { columns, Payment } from "./columns";
 import { DataTable } from "@/components/data-table";
 
 
-async function getData(): Promise<Payment[]> {
+function getData(): Payment[] {
   // Fetch data from your API here.
   return [
     {
@@ -27,9 +27,9 @@ async function getData(): Promise<Payment[]> {
 }
 
 
-const AccountsPage = async () => {
+const AccountsPage = () => {
   const newAccount = useNewAccount();
-  const data = await getData();
+  const data = getData();
 
   return(
     <div className="mx-auto w-full max-w-7xl px-4 pb-10 -mt-5">
