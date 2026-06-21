@@ -1,22 +1,16 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { client } from "@/lib/hono";
 import { ColumnDef } from "@tanstack/react-table";
+import { InferResponseType } from "hono";
 import { ArrowUpDown } from "lucide-react";
- 
-import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
 
-// This type is used to define the shape of our data.
-// You can use a Zod schema here if you want.
-export type Payment = {
-  id: string
-  amount: number
-  status: "pending" | "processing" | "success" | "failed"
-  email: string
-}
+// only assigned if response from server is OK
+export type ResponseType = InferResponseType<typeof client.api.accounts.$get, 200>["data"][0];
 
-export const columns: ColumnDef<Payment>[] = [
+export const columns: ColumnDef<ResponseType>[] = [
   {
     id: "select",
     size: 32,
@@ -49,44 +43,20 @@ export const columns: ColumnDef<Payment>[] = [
     )
   },
   {
-    accessorKey: "status",
-    header: "Status",
-  },
-  {
-    accessorKey: "email",
-    header: "Email",
-    filterFn: "includesString",
-  },
-  {
-    accessorKey: "amount",
+    accessorKey: "name",
     
-    // sort by amount
+    // sort by name
     header: ({ column }) => {
       return (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Email
+          Name
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       )
     },
-
-    // format it to money number instead of just float.
-    cell: ({ row }) => {
-      // convert str to float
-      const num = parseFloat(row.getValue("amount"));
-
-      // format it into "currency" but more specifically GBP
-      const formatted = new Intl.NumberFormat("en-GB", {
-        style: "currency",
-        currency: "GBP",
-      }).format(num);
-
-      return <div className="text-center front medium">{formatted}</div>
-    },
     filterFn: "includesString",
-
   },
 ]
