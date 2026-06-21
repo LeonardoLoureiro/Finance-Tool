@@ -41,6 +41,9 @@ export function DataTable<TData, TValue>({
   // filtering data
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
 
+  // selecting row
+  const [rowSelection, setRowSelection] = React.useState({})
+
   const table = useReactTable({
     data,
     columns,
@@ -50,9 +53,11 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    onRowSelectionChange: setRowSelection,
     state: {
       sorting,
       columnFilters,
+      rowSelection,
     },
   })
 
@@ -71,7 +76,7 @@ export function DataTable<TData, TValue>({
         />
       </div>
       <div className="overflow-hidden rounded-md border">
-        <Table className="w-full table-fixed">
+        <Table className="">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -115,6 +120,12 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
         <div className="flex items-center justify-end space-x-2 py-4">
+          {/* Show many rows are selected */}
+          <div className="flex-1 text-sm text-muted-foreground">
+            {table.getFilteredSelectedRowModel().rows.length} of{" "}
+            {table.getFilteredRowModel().rows.length} row(s) selected.
+          </div>
+          {/* Pagination: which 'page' table is in depending on how many rows there are */}
           <Button
             variant="outline"
             size="sm"
