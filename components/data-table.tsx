@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import {
   ColumnDef,
   ColumnFiltersState,
+  Row,
   SortingState,
   flexRender,
   getCoreRowModel,
@@ -23,17 +24,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Trash } from "lucide-react";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[],
   filterKey: string,
+  onDelete: (rows: Row<TData>[]) => void,
+  disabled?: boolean, 
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   filterKey,
+  onDelete,
+  disabled,
 }: DataTableProps<TData, TValue>) {
   // sorting data
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -74,6 +80,17 @@ export function DataTable<TData, TValue>({
           }
           className="max-w-sm"
         />
+        {table.getFilteredSelectedRowModel().rows.length > 0 && (
+          <Button
+            disabled={disabled}
+            size="sm"
+            variant="outline"
+            className="ml-auto font-normal text-xs"
+            >
+              <Trash />
+              Delete ({table.getFilteredSelectedRowModel().rows.length})
+          </Button>
+        )}
       </div>
       <div className="overflow-hidden rounded-md border">
         <Table className="">
