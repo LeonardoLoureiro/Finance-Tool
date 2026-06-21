@@ -32,6 +32,50 @@ const app = new Hono()
 
     return context.json({ data });
   })
+  .get(
+    "/:id",
+    zValidator("param", z.object({
+      id: z.string().optional(),
+    })),
+    clerkMiddleware(),
+    async (context) => {
+      const auth = getAuth(context);
+      const { id } = context.req.valid("param");
+
+      // if no id, then cannot fetch anything
+      if (!id) {
+        return context.json({ error: "Missing id" }, 400);
+      }
+
+      // not logged in? DENIED
+      if (!auth?.userId) {
+        throw new HTTPException(401, { 
+          res: context.json( { error: "Unauthorised."}, 401 )
+        });
+      }
+
+      const [data] = await db
+        .select({
+          id: accounts.id,
+          name: accounts.name,
+        })
+        .from(accounts)
+        .where(
+          and(
+            eq(accounts.userId, auth.userId),
+            eq(accounts.id, id)
+          ),
+        );
+      
+      // if no id found in db, then return error
+      if (!data) {
+        return context.json({ error: "Not found" }, 404);
+      }
+
+
+      return context.json({ data });
+    }
+  )
   .post(
     "/",
     clerkMiddleware(),
@@ -62,7 +106,8 @@ const app = new Hono()
 
       return context.json({ data });
     }
-  ).post(
+  )
+  .post(
     "/bulk-delete",
     clerkMiddleware(),
     zValidator(
