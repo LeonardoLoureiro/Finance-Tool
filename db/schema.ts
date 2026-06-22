@@ -39,7 +39,7 @@ export const transactions = pgTable("transactions", {
 
   categoryId: text("category_id").references(() => categories.id, {
     onDelete: "set null",
-  }).notNull(),
+  }),
 })
 
 /// RELATIONS
@@ -57,14 +57,14 @@ export const categoryRelations = relations(categories, ({ many }) => ({
 export const transactionsRelations = relations(transactions, ({ one }) => ({
   account: one(accounts, {
     fields: [transactions.accountId],
-    references: [accounts.id]
+    references: [accounts.id],
   }),
 
-  categories: one(categories, {
-    fields: [transactions.accountId],
-    references: [categories.id]
-  })
-}))
+  category: one(categories, {
+    fields: [transactions.categoryId],
+    references: [categories.id],
+  }),
+}));
 
 export const insertTransactionsSchema = createInsertSchema(transactions, {
   date: z.coerce.date(),
