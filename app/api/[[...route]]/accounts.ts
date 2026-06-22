@@ -143,6 +143,91 @@ const app = new Hono()
 
       return context.json({ data });
     }
-  );
+  )
+  .patch(
+    "/:id",
+    clerkMiddleware(),
+    // first validate the id we are ptaching
+    zValidator(
+      "param",
+      z.object({
+        id: z.string().optional(),
+      })
+    ),
+    // next validate the name we want to update when 
+    // user is editing account name/etc.
+    zValidator(
+      "json",
+      insertAccountsSchema.pick({
+        name: true,
+      })
+    ),
+    async (context) => {
+      const auth = getAuth(context);
+      const { id } = context.req.valid("param");
+      const values = context.req.valid("json");
+
+      // no id? cannot edit anything.
+      if (!id) {
+        return context.json({error: "Missing id"}, 400);
+      }
+
+      // not signed in? DENIED
+      if (!auth?.userId) {
+        return context.json({ error: "Unauthorised"}, 401);
+      }
+
+      const [data] = await db
+        .update(accounts)
+        .set(values)
+        .where(
+          and(
+            eq(accounts.userId, auth.userId),
+            eq(accounts.id, id)
+          ),
+        )
+        .returning();
+      
+      if (!data) {
+        return context.json({ error: "Not found"}, 404);
+
+      }
+
+      return context.json( {data} );
+    }
+  )
+  .delete(
+    "/:id",
+    clerkMiddleware(),
+    zValidator("param", z.object({ id: z.string() })),
+    async (context) => {
+      const auth = getAuth(context);
+      const { id } = context.req.valid("param");
+
+      if (!auth?.userId) {
+        throw new HTTPException(401, {
+          res: context.json({ error: "Unauthorised." }, 401),
+        });
+      }
+
+      const [data] = await db
+        .delete(accounts)
+        .where(
+          and(
+            eq(accounts.userId, auth.userId),
+            eq(accounts.id, id)
+          )
+        )
+        .returning({
+          id: accounts.id,
+        });
+
+      if (!data) {
+        return context.json({ error: "Not found" }, 404);
+      }
+
+      return context.json({ data });
+    }
+);
 
 export default app;

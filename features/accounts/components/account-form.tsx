@@ -7,6 +7,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useEffect } from "react"; 
 
 import { insertAccountsSchema } from "@/db/schema";
 import { Trash } from "lucide-react";
@@ -32,15 +33,22 @@ export const AccountForm = ({
   onSubmit,
   onDelete,
   disabled,
-}: Props) => {
-  const {
+  }: Props) => {
+    const {
     register,
     handleSubmit,
+    reset,
     formState: { isSubmitting, errors },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues,
   });
+
+  useEffect(() => {
+    if (!defaultValues) return;
+    reset(defaultValues);
+  }, [defaultValues, reset]);
+
 
   // when user presses submit, do this.
   const handleFormSubmit = (values: FormValues) => {
