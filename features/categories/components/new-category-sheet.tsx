@@ -6,15 +6,15 @@ import {
   SheetTitle
 } from "@/components/ui/sheet";
 
-import { insertCategorysSchema } from "@/db/schema";
-import { CategoryForm } from "@/features/Categorys/components/Category-form";
+import { insertCategoriesSchema } from "@/db/schema";
+import { CategoryForm } from "@/features/categories/components/category-form";
 import { z } from "zod";
-import { useCreateCategory } from "@/features/Categorys/api/use-create-Categorys";
-import { useNewCategory } from "@/features/Categorys/hooks/use-new-Categorys";
+import { useCreateCategory } from "@/features/categories/api/use-create-categories";
+import { useNewCategory } from "@/features/categories/hooks/use-new-categories";
 
 
 // just use the name, since we're only adding an Category name.
-const formSchema = insertCategorysSchema.pick({
+const formSchema = insertCategoriesSchema.pick({
   name: true, 
 });
 

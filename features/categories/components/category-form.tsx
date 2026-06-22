@@ -9,11 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useEffect } from "react"; 
 
-import { insertCategorysSchema } from "@/db/schema";
+import { insertCategoriesSchema } from "@/db/schema";
 import { Trash } from "lucide-react";
 
 // just use the name, since we're only adding an Category name.
-const formSchema = insertCategorysSchema.pick({
+const formSchema = insertCategoriesSchema.pick({
   name: true, 
 });
 
@@ -72,7 +72,7 @@ export const CategoryForm = ({
 
         <Input
           id="name"
-          placeholder="e.g. Cash, Bank, Credit Card"
+          placeholder="e.g. Food, Health, General, etc."
           className="rounded-md"
           disabled={disabled}
           {...register("name")}

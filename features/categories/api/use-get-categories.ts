@@ -6,7 +6,7 @@ export const useGetCategory = (id?: string) => {
   const query = useQuery({
     // if no id, then will not even run.
     enabled: !!id,
-    queryKey: ["Category", { id }],
+    queryKey: ["category", { id }],
     queryFn: async () => {
       // fetch single Category from API, since using Hono client,
       // if will simlply assign data to objects (ORM).

@@ -6,19 +6,19 @@ import {
   SheetTitle
 } from "@/components/ui/sheet";
 
-import { insertCategorysSchema } from "@/db/schema";
-import { useEditCategory } from "@/features/Categorys/api/use-edit-Categorys";
-import { useGetCategory } from "@/features/Categorys/api/use-get-Category";
-import { CategoryForm } from "@/features/Categorys/components/Category-form";
-import { useOpenCategory } from "@/features/Categorys/hooks/use-open-Category";
+import { insertCategoriesSchema } from "@/db/schema";
+import { useEditCategory } from "@/features/categories/api/use-edit-categories";
+import { useGetCategory } from "@/features/categories/api/use-get-categories";
+import { CategoryForm } from "@/features/categories/components/category-form";
+import { useOpenCategory } from "@/features/categories/hooks/use-open-category";
 import { Loader2 } from "lucide-react";
 import { useMemo } from "react";
 import { z } from "zod";
-import { useDeleteCategory } from "@/features/Categorys/api/use-delete-Category";
+import { useDeleteCategory } from "@/features/categories/api/use-delete-categories";
 import { useConfirm } from "@/hooks/use-confirm";
 
 // just use the name, since we're only adding an Category name.
-const formSchema = insertCategorysSchema.pick({
+const formSchema = insertCategoriesSchema.pick({
   name: true, 
 });
 

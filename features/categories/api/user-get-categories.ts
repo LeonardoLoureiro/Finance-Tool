@@ -4,7 +4,7 @@ import { client } from "@/lib/hono";
 // hook
 export const useGetCategories = () => {
   const query = useQuery({
-    queryKey: ["Categorys"],
+    queryKey: ["categories"],
     queryFn: async () => {
       // fetch Categorys from API, since using Hono client,
       // if will simlply assign data to objects (ORM).
