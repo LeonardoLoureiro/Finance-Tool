@@ -32,8 +32,6 @@ export const EditAccountSheet = () => {
 
   const editMutation = useEditAccount(id);
 
-  const isPending = editMutation.isPending;
-
   // while account info is fetched, show form as loading
   const isLoading = accountQuery.isLoading;
 
@@ -72,6 +70,11 @@ export const EditAccountSheet = () => {
     return { name: accountQuery.data.name };
   }, [accountQuery.data]);
 
+
+  // prevent spam delete button.
+  const isPending = 
+    editMutation.isPending || deleteMutation.isPending;
+
   return (
     <>
     <Sheet open={isOpen} onOpenChange={onClose}>
@@ -93,7 +96,7 @@ export const EditAccountSheet = () => {
             <AccountForm
               id={id}
               onSubmit={onSubmit} 
-              disabled={isPending || deleteMutation.isPending} 
+              disabled={isPending} 
               defaultValues={defaultValues}
               onDelete={onDelete}
             />
