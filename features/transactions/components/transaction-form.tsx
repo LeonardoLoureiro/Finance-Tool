@@ -8,26 +8,38 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { insertTransactionsSchema } from "@/db/schema";
 import { Trash } from "lucide-react";
+import { insertTransactionsSchema } from "@/db/schema";
 
-const formSchema = insertTransactionsSchema.pick({
-  amount: true,
-  payee: true,
-  date: true,
-  notes: true,
-  accountId: true,
-  categoryId: true,
+
+// easier to create own form schema for the form, 
+// as the api schema has some extra fields that are not needed for the form.
+const formSchema = z.object({
+  date: z.coerce.date(),
+  accountId: z.string(),
+  categoryId: z.string().nullable().optional(),
+  payee: z.string().max(100),
+  amount: z.string(),
+  notes: z.string().nullable().optional(),
+});
+
+const apiSchema = insertTransactionsSchema.omit({
+  id: true,
 });
 
 type FormValues = z.input<typeof formSchema>;
+type ApiValues = z.input<typeof apiSchema>;
 
 type Props = {
   id?: string;
   defaultValues?: FormValues;
-  onSubmit: (values: FormValues) => void;
+  onSubmit: (values: ApiValues) => void;
   onDelete?: () => void;
   disabled?: boolean;
+  accountOptions: { label: string; value: string }[];
+  categoryOptions: { label: string; value: string }[];
+  onCreateAccount: (name: string) => void;
+  onCreateCategory: (name: string) => void;
 };
 
 export const TransactionForm = ({
@@ -36,6 +48,10 @@ export const TransactionForm = ({
   onSubmit,
   onDelete,
   disabled,
+  accountOptions,
+  categoryOptions,
+  onCreateAccount,
+  onCreateCategory,
 }: Props) => {
   const {
     register,
