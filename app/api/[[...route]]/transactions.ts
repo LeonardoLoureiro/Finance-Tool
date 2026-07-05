@@ -1,18 +1,32 @@
 import { db } from "@/db/drizzle";
-import { transactions, insertTransactionsSchema } from "@/db/schema";
+import {
+  accounts,
+  categories,
+  insertTransactionsSchema,
+  transactions
+} from "@/db/schema";
 import { clerkMiddleware, getAuth } from "@hono/clerk-auth";
 import { zValidator } from "@hono/zod-validator";
 import { createId } from "@paralleldrive/cuid2";
-import { and, eq, inArray } from "drizzle-orm/sql/expressions/conditions";
+import { parse, subDays } from "date-fns";
+import { and, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import z from "zod";
 
 const app = new Hono()
-  // GET all transactions for user
+  // GET transaction within range
   .get(
     "/",
-    clerkMiddleware(), 
+    clerkMiddleware(),
+    zValidator(
+      "query",
+      z.object({
+        from: z.string().optional(),
+        to: z.string().optional(),
+        accountId: z.string().optional(),
+      })
+    ),
     async (context) => {
       const auth = getAuth(context);
 
@@ -21,74 +35,115 @@ const app = new Hono()
           res: context.json({ error: "Unauthorised" }, 401),
         });
       }
+
+      // default values if nothing given.
+      const defaultTo = new Date();
+      const defaultFrom = subDays(defaultTo, 30);
+
+      // get param passed
+      const { from, to, accountId } = context.req.valid("query");
+      
+      // if no from passed, then only last 30 days
+      const startDate = from
+        ? parse(from, "yyyy-MM-dd", new Date())
+        : defaultFrom;
+
+      // no given end date? Assume up until current day
+      const endDate = to 
+        ? parse(to, "yyyy-MM-dd", new Date())
+        : defaultTo;
+      
 
       const data = await db
         .select({
           id: transactions.id,
-          amount: transactions.amount,
-          payee: transactions.payee,
           date: transactions.date,
-          notes: transactions.notes,
-          accountId: transactions.accountId,
+          category: categories.name,
           categoryId: transactions.categoryId,
+          payee: transactions.payee,
+          amount: transactions.amount,
+          notes: transactions.notes,
+          account: accounts.name,
+          accountId: transactions.accountId,
         })
         .from(transactions)
-        .where(eq(transactions.accountId, transactions.accountId)); // placeholder safety removed below
+        // fetch all transactions which belong to user ONLY
+        .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+        // left join because category is optional (transaction may not have one)
+        .leftJoin(categories, eq(transactions.categoryId, categories.id))
+        .where(
+          and(
+            // if accountId given then get transactions for that account
+            accountId ? eq(transactions.accountId, accountId) : undefined,
+            // of course only fetch transactions belonging to user.
+            eq(accounts.userId, auth.userId),
+            // filter by date range as getting all may be too much data to sort out, unneeded overhead.
+            gte(transactions.date, startDate),
+            lte(transactions.date, endDate),
+          )
+        )
+        .orderBy(desc(transactions.date));
 
-      return context.json({ data });
+      return context.json({ data });  
     }
+
   )
-  // GET single transaction
+
+  // get specific transaction
   .get(
     "/:id",
     clerkMiddleware(),
-    zValidator(
-      "param", 
-      z.object({ id: z.string() })),
     async (context) => {
       const auth = getAuth(context);
-      const { id } = context.req.valid("param");
 
       if (!auth?.userId) {
         throw new HTTPException(401, {
           res: context.json({ error: "Unauthorised" }, 401),
         });
       }
-      
-      const [data] = await db
+
+      const id = context.req.param("id");
+
+      const [transaction] = await db
         .select({
           id: transactions.id,
-          amount: transactions.amount,
-          payee: transactions.payee,
           date: transactions.date,
+          categoryId: transactions.categoryId,
+          payee: transactions.payee,
+          amount: transactions.amount,
           notes: transactions.notes,
           accountId: transactions.accountId,
-          categoryId: transactions.categoryId,
         })
         .from(transactions)
-        .where(eq(transactions.id, id));
 
-      if (!data) {
-        return context.json({ error: "Not found" }, 404);
+        // same joins as list route
+        .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+        .where(
+          and(
+            eq(transactions.id, id),
+            eq(accounts.userId, auth.userId) // security: ensure ownership
+          )
+        )
+        .limit(1);
+
+      if (!transaction) {
+        throw new HTTPException(404, {
+          res: context.json({ error: "Transaction not found" }, 404),
+        });
       }
 
-      return context.json({ data });
+      return context.json({ data: transaction });
     }
   )
 
-  // CREATE transaction
+  // insert a new transaction
   .post(
     "/",
     clerkMiddleware(),
     zValidator(
       "json",
-      insertTransactionsSchema.pick({
-        amount: true,
-        payee: true,
-        date: true,
-        notes: true,
-        accountId: true,
-        categoryId: true,
+      insertTransactionsSchema.omit({
+        id: true, // no need for user to 'know'
       })
     ),
     async (context) => {
@@ -97,7 +152,7 @@ const app = new Hono()
 
       if (!auth?.userId) {
         throw new HTTPException(401, {
-          res: context.json({ error: "Unauthorised" }, 401),
+          res: context.json({ error: "Unauthorised." }, 401),
         });
       }
 
@@ -113,51 +168,78 @@ const app = new Hono()
     }
   )
 
-  // BULK DELETE
+  // delete multiple transactions at once
   .post(
     "/bulk-delete",
     clerkMiddleware(),
+
+    // expect an array of transaction ids to delete
     zValidator(
       "json",
       z.object({
         ids: z.array(z.string()),
       })
     ),
+
     async (context) => {
       const auth = getAuth(context);
-      const { ids } = context.req.valid("json");
+      const values = context.req.valid("json");
 
       if (!auth?.userId) {
         throw new HTTPException(401, {
-          res: context.json({ error: "Unauthorised" }, 401),
+          res: context.json({ error: "Unauthorised." }, 401),
         });
       }
 
+      // only transaction belonging to THIS user and match THESE IDs.
+      const transactionsToDelete = db.$with("trans_to_delete").as(
+        db.select({ id: transactions.id }).from(transactions)
+          .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+          .where(and(
+            inArray(transactions.id, values.ids),
+            eq(accounts.userId, auth.userId),
+          ))
+      )
+
+      // finally delete transactions, but ONLY if they are already in the 
+      // pre-approved list.
       const data = await db
+        .with(transactionsToDelete)
         .delete(transactions)
-        .where(inArray(transactions.id, ids))
-        .returning({ id: transactions.id });
+        .where(
+          inArray(transactions.id, sql`(select id from ${transactionsToDelete})`)
+        )
+        .returning({
+          id: transactions.id,
+        });
+
+        // essentially: filter first, then delete.
 
       return context.json({ data });
     }
   )
 
-  // PATCH
+  // update a single transaction
   .patch(
     "/:id",
     clerkMiddleware(),
-    zValidator("param", z.object({ id: z.string() })),
+
+    // validate transaction id from URL
     zValidator(
-      "json",
-      insertTransactionsSchema.pick({
-        amount: true,
-        payee: true,
-        date: true,
-        notes: true,
-        accountId: true,
-        categoryId: true,
+      "param",
+      z.object({
+        id: z.string(),
       })
     ),
+
+    // validate fields allowed to update
+    zValidator(
+      "json",
+      insertTransactionsSchema.omit({
+        id: true,  
+      })
+    ),
+
     async (context) => {
       const auth = getAuth(context);
       const { id } = context.req.valid("param");
@@ -167,10 +249,31 @@ const app = new Hono()
         return context.json({ error: "Unauthorised" }, 401);
       }
 
+      // ensure this transaction belongs to the user
+      const transactionToUpdate = db.$with("transaction_to_update").as(
+        db
+          .select({ id: transactions.id })
+          .from(transactions)
+          .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+          .where(
+            and(
+              eq(transactions.id, id),
+              eq(accounts.userId, auth.userId)
+            )
+          )
+      );
+
+      // update only if it exists in pre-approved list
       const [data] = await db
+        .with(transactionToUpdate)
         .update(transactions)
         .set(values)
-        .where(eq(transactions.id, id))
+        .where(
+          inArray(
+            transactions.id,
+            sql`(select id from ${transactionToUpdate})`
+          )
+        )
         .returning();
 
       if (!data) {
@@ -181,25 +284,57 @@ const app = new Hono()
     }
   )
 
-  // DELETE
+  // delete a single transactions:
   .delete(
     "/:id",
     clerkMiddleware(),
-    zValidator("param", z.object({ id: z.string() })),
+
+    // validate transaction id from URL
+    zValidator(
+      "param",
+      z.object({
+        id: z.string(),
+      })
+    ),
+
     async (context) => {
       const auth = getAuth(context);
       const { id } = context.req.valid("param");
 
       if (!auth?.userId) {
         throw new HTTPException(401, {
-          res: context.json({ error: "Unauthorised" }, 401),
+          res: context.json({ error: "Unauthorised." }, 401),
         });
       }
 
+      // only allow deleting transaction if it belongs
+      // to this user (via account ownership)
+      const transactionToDelete = db.$with("transaction_to_delete").as(
+        db
+          .select({ id: transactions.id })
+          .from(transactions)
+          .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+          .where(
+            and(
+              eq(transactions.id, id),
+              eq(accounts.userId, auth.userId)
+            )
+          )
+      );
+
+      // delete only if transaction exists in pre-approved list.
       const [data] = await db
+        .with(transactionToDelete)
         .delete(transactions)
-        .where(eq(transactions.id, id))
-        .returning({ id: transactions.id });
+        .where(
+          inArray(
+            transactions.id,
+            sql`(select id from ${transactionToDelete})`
+          )
+        )
+        .returning({
+          id: transactions.id,
+        });
 
       if (!data) {
         return context.json({ error: "Not found" }, 404);
