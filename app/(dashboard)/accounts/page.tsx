@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBulkDeleteAccounts } from "@/features/accounts/api/use-bulk-delete";
-import { useGetAccounts } from "@/features/accounts/api/user-get-accounts";
+import { useGetAccounts } from "@/features/accounts/api/use-get-accounts";
 import { useNewAccount } from "@/features/accounts/hooks/use-new-accounts";
 import { useConfirm } from "@/hooks/use-confirm";
 import { Loader2, Plus } from "lucide-react";

@@ -8,7 +8,7 @@ import {
 
 import { insertCategoriesSchema } from "@/db/schema";
 import { useEditCategory } from "@/features/categories/api/use-edit-categories";
-import { useGetCategory } from "@/features/categories/api/use-get-categories";
+import { useGetCategory } from "@/features/categories/api/use-get-categorie";
 import { CategoryForm } from "@/features/categories/components/category-form";
 import { useOpenCategory } from "@/features/categories/hooks/use-open-category";
 import { Loader2 } from "lucide-react";
