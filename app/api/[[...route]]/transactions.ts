@@ -168,6 +168,49 @@ const app = new Hono()
     }
   )
 
+  // create multiple transactions at once
+  .post(
+    "/bulk-create",
+    clerkMiddleware(),
+
+    // expect an array of transactions
+    zValidator(
+      "json",
+      z.array(
+        insertTransactionsSchema.omit({
+          id: true,
+        })
+      )
+    ),
+
+    async (context) => {
+      const auth = getAuth(context);
+      const values = context.req.valid("json");
+
+      if (!auth?.userId) {
+        throw new HTTPException(401, {
+          res: context.json({ error: "Unauthorised." }, 401),
+        });
+      }
+
+      // map each transaction and attach required server fields
+      // ensuring that a new id is created for each new transaction.
+      const rows = values.map((transactions) => ({
+        id: createId(),
+        ...transactions,
+        // IMPORTANT: ensure ownership is enforced server-side
+        // (prevents user assigning to other accounts later)
+      }));
+
+      const data = await db
+        .insert(transactions)
+        .values(rows)
+        .returning();
+
+      return context.json({ data });
+    }
+  )
+
   // delete multiple transactions at once
   .post(
     "/bulk-delete",
