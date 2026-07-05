@@ -40,7 +40,9 @@ const TransactionsPage = () => {
     <div className="mx-auto w-full max-w-7xl px-4 pb-10 -mt-5">
       <Card className="border-none drop-shadow-sm">
         <CardHeader className="flex flex-col gap-y-2 lg:flex-row lg:items-center lg:justify-between">
-          <CardTitle className="text-xl line-clamp-1">Transactions</CardTitle>
+          <CardTitle className="text-xl line-clamp-1">
+            Transactions History
+            </CardTitle>
 
           <Button size="sm" className="w-full lg:w-auto" onClick={newTransaction.onOpen}>
             <Plus className="mr-2 size-4" />
