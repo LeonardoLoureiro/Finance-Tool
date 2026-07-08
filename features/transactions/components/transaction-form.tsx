@@ -5,15 +5,9 @@ import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { Select } from "@/components/select";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { insertTransactionsSchema } from "@/db/schema";
 import { Trash } from "lucide-react";
 
@@ -81,56 +75,26 @@ export const TransactionForm = ({
     console.log({values});
   }
 
-  // get label from accoutId
-  // fixing issue where accountId was being displayed after selecting 
-  // option.
-  const getAccountLabel = (value: string) => {
-    const account = accountOptions.find(option => option.value === value);
-    return account?.label || value;
-  };
-
-  // get label from categoryId
-  // accept undefined as well because form field value can be undefined
-  const getCategoryLabel = (value: string | null | undefined) => {
-    if (value == null || value === "none") return "Select a category";
-
-    const category = categoryOptions.find((option) => option.value === value);
-    return category?.label || value;
-  };
-
   return (
     <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 px-4">
       
       {/* account Field */}
       <div className="space-y-2">
         <Label htmlFor="accountId">Account</Label>
-
         <Controller
           control={control}
           name="accountId"
           render={({ field }) => (
             <Select
               value={field.value}
-              onValueChange={field.onChange}
+              onChange={field.onChange}
+              options={accountOptions}
               disabled={disabled}
-            >
-              <SelectTrigger className="w-full">
-                 <SelectValue placeholder="Select an account">
-                  {field.value ? getAccountLabel(field.value) : "Select an account"}
-                </SelectValue>
-              </SelectTrigger>
-
-              <SelectContent className="min-w-full">
-                {accountOptions.map((account) => (
-                  <SelectItem key={account.value} value={account.value}>
-                    {account.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              placeholder="Select an account"
+              onCreate={onCreateAccount}
+            />
           )}
         />
-
         {errors.accountId && (
           <p className="text-sm text-red-500">{errors.accountId.message}</p>
         )}
@@ -139,41 +103,20 @@ export const TransactionForm = ({
       {/* category Field */}
       <div className="space-y-2">
         <Label htmlFor="categoryId">Category</Label>
-
         <Controller
           control={control}
           name="categoryId"
           render={({ field }) => (
             <Select
-              value={field.value ?? "none"}
-               onValueChange={(value) => {
-                field.onChange(value === "none" ? null : value);
-              }}
+              value={field.value}
+              onChange={field.onChange}
+              options={categoryOptions}
               disabled={disabled}
-            >
-              <SelectTrigger className="w-full">
-                 <SelectValue placeholder="Select a category">
-                  { getCategoryLabel(field.value) }
-                </SelectValue>
-              </SelectTrigger>
-
-              <SelectContent className="min-w-full">
-                {/* This is the "No category" option */}
-                <SelectItem key="none" value="none">
-                  No category
-                </SelectItem>
-
-                {/* show all options saved in user account */}
-                {categoryOptions.map((category) => (
-                  <SelectItem key={category.value} value={category.value}>
-                    {category.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              placeholder="Select a category"
+              onCreate={onCreateCategory}
+            />
           )}
         />
-
         {errors.categoryId && (
           <p className="text-sm text-red-500">{errors.categoryId.message}</p>
         )}

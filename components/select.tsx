@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { SingleValue } from "react-select";
-import CreateSelect from "react-select/creatable";
+import CreateableSelect from "react-select/creatable";
 
 type Props = {
   onChange: (value?: string) => void;
@@ -36,7 +36,7 @@ export const Select = ({
 
 
   return (
-    <CreateSelect
+    <CreateableSelect
       placeholder={placeholder}
       className="text-sm h-8"
       styles={{
