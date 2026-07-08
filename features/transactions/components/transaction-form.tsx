@@ -66,7 +66,10 @@ export const TransactionForm = ({
     formState: { isSubmitting, errors },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues,
+    defaultValues: {
+    categoryId: null,  // fix base UI error
+    ...defaultValues,
+    },
   });
 
   useEffect(() => {
@@ -86,8 +89,19 @@ export const TransactionForm = ({
     return account?.label || value;
   };
 
+  // get label from categoryId
+  // accept undefined as well because form field value can be undefined
+  const getCategoryLabel = (value: string | null | undefined) => {
+    if (value == null || value === "none") return "Select a category";
+
+    const category = categoryOptions.find((option) => option.value === value);
+    return category?.label || value;
+  };
+
   return (
     <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 px-4">
+      
+      {/* account Field */}
       <div className="space-y-2">
         <Label htmlFor="accountId">Account</Label>
 
@@ -100,13 +114,13 @@ export const TransactionForm = ({
               onValueChange={field.onChange}
               disabled={disabled}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                  <SelectValue placeholder="Select an account">
                   {field.value ? getAccountLabel(field.value) : "Select an account"}
                 </SelectValue>
               </SelectTrigger>
 
-              <SelectContent>
+              <SelectContent className="min-w-full">
                 {accountOptions.map((account) => (
                   <SelectItem key={account.value} value={account.value}>
                     {account.label}
@@ -119,6 +133,49 @@ export const TransactionForm = ({
 
         {errors.accountId && (
           <p className="text-sm text-red-500">{errors.accountId.message}</p>
+        )}
+      </div>
+
+      {/* category Field */}
+      <div className="space-y-2">
+        <Label htmlFor="categoryId">Category</Label>
+
+        <Controller
+          control={control}
+          name="categoryId"
+          render={({ field }) => (
+            <Select
+              value={field.value ?? "none"}
+               onValueChange={(value) => {
+                field.onChange(value === "none" ? null : value);
+              }}
+              disabled={disabled}
+            >
+              <SelectTrigger className="w-full">
+                 <SelectValue placeholder="Select a category">
+                  { getCategoryLabel(field.value) }
+                </SelectValue>
+              </SelectTrigger>
+
+              <SelectContent className="min-w-full">
+                {/* This is the "No category" option */}
+                <SelectItem key="none" value="none">
+                  No category
+                </SelectItem>
+
+                {/* show all options saved in user account */}
+                {categoryOptions.map((category) => (
+                  <SelectItem key={category.value} value={category.value}>
+                    {category.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        />
+
+        {errors.categoryId && (
+          <p className="text-sm text-red-500">{errors.categoryId.message}</p>
         )}
       </div>
 
