@@ -2,15 +2,20 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { insertTransactionsSchema } from "@/db/schema";
-
+import { Trash } from "lucide-react";
 
 // easier to create own form schema for the form, 
 // as the api schema has some extra fields that are not needed for the form.
@@ -19,7 +24,7 @@ const formSchema = z.object({
   accountId: z.string(),
   categoryId: z.string().nullable().optional(),
   payee: z.string().max(100),
-  amount: z.string(),
+  amount: z.coerce.number(),
   notes: z.string().nullable().optional(),
 });
 
@@ -52,9 +57,10 @@ export const TransactionForm = ({
   categoryOptions,
   onCreateAccount,
   onCreateCategory,
-}: Props) => {
-  const {
+  }: Props) => {
+    const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { isSubmitting, errors },
@@ -68,42 +74,52 @@ export const TransactionForm = ({
     reset(defaultValues);
   }, [defaultValues, reset]);
 
+  const onFormSubmit = (values: FormValues) => {
+    console.log({values});
+  }
+
+  // get label from accoutId
+  // fixing issue where accountId was being displayed after selecting 
+  // option.
+  const getAccountLabel = (value: string) => {
+    const account = accountOptions.find(option => option.value === value);
+    return account?.label || value;
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 px-4">
+    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 px-4">
       <div className="space-y-2">
-        <Label htmlFor="payee">Payee</Label>
-        <Input id="payee" placeholder="e.g. Tesco" disabled={disabled} {...register("payee")} />
-        {errors.payee && <p className="text-sm text-red-500">{errors.payee.message}</p>}
-      </div>
+        <Label htmlFor="accountId">Account</Label>
 
-      <div className="space-y-2">
-        <Label htmlFor="amount">Amount</Label>
-        <Input id="amount" type="number" placeholder="e.g. 1050" disabled={disabled} {...register("amount", { valueAsNumber: true })} />
-        {errors.amount && <p className="text-sm text-red-500">{errors.amount.message}</p>}
-      </div>
+        <Controller
+          control={control}
+          name="accountId"
+          render={({ field }) => (
+            <Select
+              value={field.value}
+              onValueChange={field.onChange}
+              disabled={disabled}
+            >
+              <SelectTrigger>
+                 <SelectValue placeholder="Select an account">
+                  {field.value ? getAccountLabel(field.value) : "Select an account"}
+                </SelectValue>
+              </SelectTrigger>
 
-      <div className="space-y-2">
-        <Label htmlFor="date">Date</Label>
-        <Input id="date" type="date" disabled={disabled} {...register("date", { valueAsDate: true })} />
-        {errors.date && <p className="text-sm text-red-500">{errors.date.message}</p>}
-      </div>
+              <SelectContent>
+                {accountOptions.map((account) => (
+                  <SelectItem key={account.value} value={account.value}>
+                    {account.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        />
 
-      <div className="space-y-2">
-        <Label htmlFor="accountId">Account ID</Label>
-        <Input id="accountId" placeholder="Account ID" disabled={disabled} {...register("accountId")} />
-        {errors.accountId && <p className="text-sm text-red-500">{errors.accountId.message}</p>}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="categoryId">Category ID</Label>
-        <Input id="categoryId" placeholder="Category ID" disabled={disabled} {...register("categoryId")} />
-        {errors.categoryId && <p className="text-sm text-red-500">{errors.categoryId.message}</p>}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="notes">Notes</Label>
-        <Input id="notes" placeholder="Optional notes" disabled={disabled} {...register("notes")} />
-        {errors.notes && <p className="text-sm text-red-500">{errors.notes.message}</p>}
+        {errors.accountId && (
+          <p className="text-sm text-red-500">{errors.accountId.message}</p>
+        )}
       </div>
 
       <Button type="submit" className="w-full rounded-md" disabled={disabled || isSubmitting}>
