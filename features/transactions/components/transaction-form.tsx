@@ -8,6 +8,7 @@ import { z } from "zod";
 import { DatePicker } from "@/components/date-picker";
 import { Select } from "@/components/select";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { insertTransactionsSchema } from "@/db/schema";
@@ -80,6 +81,26 @@ export const TransactionForm = ({
   return (
     <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 px-4">
       
+      {/* date field */}
+      <div className="space-y-2">
+        <Label htmlFor="date">Date</Label>
+        <Controller
+          control={control}
+          name="date"
+          render={({ field }) => (
+            <DatePicker
+              value={field.value as Date | undefined}
+              onChange={field.onChange}
+              disabled={disabled}
+              placeholder="Select a date"
+            />
+          )}
+        />
+        {errors.date && (
+          <p className="text-sm text-red-500">{errors.date.message}</p>
+        )}
+      </div>
+
       {/* account Field */}
       <div className="space-y-2">
         <Label htmlFor="accountId">Account</Label>
@@ -124,26 +145,19 @@ export const TransactionForm = ({
         )}
       </div>
 
-      {/* date field */}
+      {/* payee Field */}
       <div className="space-y-2">
-        <Label htmlFor="date">Date</Label>
-        <Controller
-          control={control}
-          name="date"
-          render={({ field }) => (
-            <DatePicker
-              value={field.value as Date | undefined}
-              onChange={field.onChange}
-              disabled={disabled}
-              placeholder="Select a date"
-            />
-          )}
+        <Label htmlFor="payee">Payee</Label>
+        <Input
+          id="payee"
+          placeholder="e.g., Starbucks, Rent, Salary"
+          disabled={disabled}
+          {...register("payee")}
         />
-        {errors.date && (
-          <p className="text-sm text-red-500">{errors.date.message}</p>
+        {errors.payee && (
+          <p className="text-sm text-red-500">{errors.payee.message}</p>
         )}
       </div>
-
 
       {/* notes Field */}
       <div className="space-y-2">
