@@ -26,6 +26,7 @@ export const AmountInput = ({
   const parsedValue = parseFloat(value);
   const isIncome = parsedValue > 0;
   const isExpense = parsedValue < 0;
+  const hasValue = value && value !== "0" && value !== "0.00" && value !== "";
 
   // make litttle button to allow user to switch between
   // and expense and income instead of just writing '-'
@@ -39,21 +40,8 @@ export const AmountInput = ({
   return (
     <div className="relative">
       <div className="relative">
-        <CurrencyInput
-          prefix="£"
-          placeholder={placeholder}
-          value={value}
-          decimalScale={2}
-          decimalsLimit={2}
-          onValueChange={onChange}
-          disabled={disabled}
-          className={cn(
-            "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-          )}
-        />
-        
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-x-2">
-          {/* Reverse button */}
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center">
+          {/* reverse button */}
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger
@@ -66,7 +54,7 @@ export const AmountInput = ({
                   >
                     {isIncome && <PlusCircle className="size-4 text-emerald-500" />}
                     {isExpense && <MinusCircle className="size-4 text-rose-500" />}
-                    {!isIncome && !isExpense && parsedValue !== 0 && (
+                    {!isIncome && !isExpense && !hasValue && (
                       <Info className="size-4 text-muted-foreground" />
                     )}
                   </button>
@@ -76,13 +64,26 @@ export const AmountInput = ({
                 <p>
                   {isIncome && "Click to switch to expense"}
                   {isExpense && "Click to switch to income"}
-                  {!isIncome && !isExpense && parsedValue !== 0 && "Click to toggle"}
-                  {(!value || value === "0.00" || value === "") && "Enter an amount"}
+                  {!hasValue && "Enter an amount first"}
                 </p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
+
+        <CurrencyInput
+          prefix="£"
+          placeholder={placeholder}
+          value={value}
+          decimalScale={2}
+          decimalsLimit={2}
+          onValueChange={onChange}
+          disabled={disabled}
+          className={cn(
+            "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+            "pl-10"
+          )}
+        />        
       </div>
       
       {/* helper text */}
