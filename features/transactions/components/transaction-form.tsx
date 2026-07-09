@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { AmountInput } from "@/components/amount-input";
 import { insertTransactionsSchema } from "@/db/schema";
 import { Trash } from "lucide-react";
 
@@ -156,6 +157,45 @@ export const TransactionForm = ({
         />
         {errors.payee && (
           <p className="text-sm text-red-500">{errors.payee.message}</p>
+        )}
+      </div>
+
+      {/* amount Field */}
+      <div className="space-y-2">
+        <Label htmlFor="amount">
+        Amount
+        <span className="ml-2 text-sm text-muted-foreground">
+          (Use + for income, - for expenses)
+        </span>
+        </Label>
+        
+        <Controller
+          control={control}
+          name="amount"
+          render={({ field }) => {
+            // Convert milliunits to pounds for display
+            const displayValue = field.value !== undefined && field.value !== null 
+              ? (Number(field.value) / 1000).toFixed(2) 
+              : "";
+
+            return (
+              <AmountInput
+                value={displayValue}
+                onChange={(value) => {
+                  // Convert pounds to milliunits for storage
+                  const numValue = parseFloat(value || "0");
+                  const milliunits = Math.round(numValue * 1000);
+                  field.onChange(milliunits);
+                }}
+                placeholder="0.00"
+                disabled={disabled}
+              />
+            );
+          }}
+        />
+
+        {errors.amount && (
+          <p className="text-sm text-red-500">{errors.amount.message}</p>
         )}
       </div>
 
