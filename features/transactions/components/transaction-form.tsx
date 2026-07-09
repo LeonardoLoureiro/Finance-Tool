@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { insertTransactionsSchema } from "@/db/schema";
 import { Trash } from "lucide-react";
+import { DatePicker } from "@/components/date-picker";
 
 // easier to create own form schema for the form, 
 // as the api schema has some extra fields that are not needed for the form.
@@ -121,6 +122,27 @@ export const TransactionForm = ({
           <p className="text-sm text-red-500">{errors.categoryId.message}</p>
         )}
       </div>
+
+      {/* date field */}
+      <div className="space-y-2">
+        <Label htmlFor="date">Date</Label>
+        <Controller
+          control={control}
+          name="date"
+          render={({ field }) => (
+            <DatePicker
+              value={field.value as Date | undefined}
+              onChange={field.onChange}
+              disabled={disabled}
+              placeholder="Select a date"
+            />
+          )}
+        />
+        {errors.date && (
+          <p className="text-sm text-red-500">{errors.date.message}</p>
+        )}
+      </div>
+
 
       <Button type="submit" className="w-full rounded-md" disabled={disabled || isSubmitting}>
         {id ? "Save Changes" : "Create Transaction"}
