@@ -5,12 +5,13 @@ import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { DatePicker } from "@/components/date-picker";
 import { Select } from "@/components/select";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { insertTransactionsSchema } from "@/db/schema";
 import { Trash } from "lucide-react";
-import { DatePicker } from "@/components/date-picker";
 
 // easier to create own form schema for the form, 
 // as the api schema has some extra fields that are not needed for the form.
@@ -140,6 +141,22 @@ export const TransactionForm = ({
         />
         {errors.date && (
           <p className="text-sm text-red-500">{errors.date.message}</p>
+        )}
+      </div>
+
+
+      {/* notes Field */}
+      <div className="space-y-2">
+        <Label htmlFor="notes">Notes (Optional)</Label>
+        <Textarea
+          id="notes"
+          placeholder="Add any additional notes..."
+          disabled={disabled}
+          className="resize-none"
+          {...register("notes")}
+        />
+        {errors.notes && (
+          <p className="text-sm text-red-500">{errors.notes.message}</p>
         )}
       </div>
 
