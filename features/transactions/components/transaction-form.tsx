@@ -65,6 +65,7 @@ export const TransactionForm = ({
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+    amount: 0,
     categoryId: null,  // fix base UI error
     ...defaultValues,
     },
@@ -174,7 +175,7 @@ export const TransactionForm = ({
           name="amount"
           render={({ field }) => {
             // Convert milliunits to pounds for display
-            const displayValue = field.value !== undefined && field.value !== null 
+            const displayValue = field.value !== undefined && field.value !== null && field.value !== 0
               ? (Number(field.value) / 1000).toFixed(2) 
               : "";
 
@@ -187,7 +188,6 @@ export const TransactionForm = ({
                   const milliunits = Math.round(numValue * 1000);
                   field.onChange(milliunits);
                 }}
-                placeholder="0.00"
                 disabled={disabled}
               />
             );

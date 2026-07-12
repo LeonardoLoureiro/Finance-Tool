@@ -79,7 +79,7 @@ export const AmountInput = ({
         <CurrencyInput
           prefix="£"
           placeholder={placeholder}
-          value={value}
+          value={value || ""}
           decimalScale={2}
           decimalsLimit={2}
           onValueChange={onChange}
@@ -93,9 +93,8 @@ export const AmountInput = ({
       
       {/* helper text */}
       <div className="mt-1 text-xs text-muted-foreground">
-        {isIncome && "✅ This will count as income"}
-        {isExpense && "❌ This will count as expense"}
-        {!isIncome && !isExpense && parsedValue !== 0 && "ℹ️ Enter positive for income, negative for expense"}
+        {isIncome && "This will count as income"}
+        {isExpense && "This will count as expense"}
         {(!value || value === "0" || value === "") && "Enter an amount (positive = income, negative = expense)"}
       </div>
     </div>

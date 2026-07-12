@@ -97,7 +97,7 @@ export const NewTransactionSheet = () => {
               accountOptions={accountOptions}
               onCreateAccount={onCreateAccount}
               defaultValues={{
-                amount: "0",
+                amount: 0,
                 payee: "",
                 date: new Date(),
                 notes: "",
