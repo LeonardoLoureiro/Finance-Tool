@@ -1,13 +1,15 @@
 "use client";
 
+import { AccountColumn } from "@/app/(dashboard)/transactions/account-column";
+import { CategoryColumn } from "@/app/(dashboard)/transactions/category-column";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { client } from "@/lib/hono";
+import { cn, convertAmountFromMilliUnits } from "@/lib/utils";
 import { ColumnDef } from "@tanstack/react-table";
 import { InferResponseType } from "hono";
 import { ArrowUpDown } from "lucide-react";
 import { Actions } from "./actions";
-import { cn, convertAmountFromMilliUnits } from "@/lib/utils";
 
 export type ResponseType = InferResponseType<typeof client.api.transactions.$get, 200>["data"][0];
 
@@ -62,9 +64,10 @@ export const columns: ColumnDef<ResponseType>[] = [
       const isExpense = amount < 0;
       
       return <span className={cn(
-        "font-mono",
-        isIncome && "text-emerald-500",
-        isExpense && "text-rose-500"
+        "inline-flex items-center rounded-full px-3 py-1 text-sm font-mono font-medium",
+        isIncome && "bg-emerald-100 text-emerald-700",
+        isExpense && "bg-rose-100 text-rose-700",
+        amount === 0 && "bg-gray-100 text-gray-700"
       )}>
         {convertAmountFromMilliUnits(amount)}
       </span>;
@@ -83,12 +86,22 @@ export const columns: ColumnDef<ResponseType>[] = [
   {
     accessorKey: "account",
     header: "Account",
-    cell: ({ row }) => <span>{row.original.account || "N/A"}</span>,
+    // simply return custom code wich handles the hook imports
+    // just need to pass values
+    cell: ({ row }) => <AccountColumn
+        id={row.original.id}
+        account={row.original.account} 
+        accountId={row.original.accountId} 
+      />,
   },
   {
     accessorKey: "category",
     header: "Category",
-    cell: ({ row }) => <span>{row.original.category || "N/A"}</span>,
+    cell: ({ row }) => <CategoryColumn
+        id={row.original.id}
+        category={row.original.category} 
+        categoryId={row.original.categoryId} 
+      />,
   },
   {
     id: "actions",
