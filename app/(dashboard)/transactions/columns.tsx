@@ -7,6 +7,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { InferResponseType } from "hono";
 import { ArrowUpDown } from "lucide-react";
 import { Actions } from "./actions";
+import { convertAmountFromMilliUnits } from "@/lib/utils";
 
 export type ResponseType = InferResponseType<typeof client.api.transactions.$get, 200>["data"][0];
 
@@ -55,7 +56,10 @@ export const columns: ColumnDef<ResponseType>[] = [
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
-    cell: ({ row }) => <span>{(row.original.amount / 100).toFixed(2)}</span>,
+    cell: ({ row }) => {
+      const amount = row.original.amount;
+      return <span className="font-mono">{convertAmountFromMilliUnits(amount)}</span>;
+    },
   },
   {
     accessorKey: "date",

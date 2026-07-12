@@ -218,16 +218,16 @@ export const TransactionForm = ({
           control={control}
           name="amount"
           render={({ field }) => {
-            // Convert milliunits to pounds for display
-            // Convert to display value - show empty when 0 or undefined
+            // Just display the value as-is (it's already in pounds)
             const displayValue = field.value && field.value !== 0 
-                    ? field.value.toString() 
-                    : "";
+              ? field.value.toString()
+              : "";
 
             return (
               <AmountInput
                 value={displayValue}
                 onChange={(value) => {
+                  // Store as pounds
                   const numValue = parseFloat(value || "0");
                   field.onChange(numValue);
                 }}
@@ -239,7 +239,7 @@ export const TransactionForm = ({
         />
 
         {errors.amount && (
-          <p className="text-xs text-red-400 mt-0.5">{errors.amount.message}</p>
+          <p className="text-sm text-red-500">{errors.amount.message}</p>
         )}
       </div>
 

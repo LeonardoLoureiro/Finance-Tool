@@ -28,20 +28,18 @@ export const AmountInput = ({
   const isExpense = parsedValue < 0;
   const hasValue = value && value !== "0" && value !== "0.00" && value !== "";
 
-  // make litttle button to allow user to switch between
-  // and expense and income instead of just writing '-'
   const onReverseValue = () => {
-    // if no number then do nothing. 
-    if (!value) return;
-
-    onChange((parsedValue * -1).toString());
+    if (!value || value === "0" || value === "0.00") return;
+    const numValue = parseFloat(value);
+    if (!isNaN(numValue)) {
+      onChange((numValue * -1).toString());
+    }
   };
 
   return (
     <div className="relative">
       <div className="relative">
         <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center">
-          {/* reverse button */}
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger
@@ -80,12 +78,10 @@ export const AmountInput = ({
           prefix="£"
           placeholder={placeholder}
           value={value || ""}
-          decimalScale={2}
-          decimalsLimit={2}
-          allowDecimals={true}
-          allowNegativeValue={true}
           onValueChange={onChange}
           disabled={disabled}
+          allowDecimals={true}
+          allowNegativeValue={true}
           className={cn(
             "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
             "pl-10"
@@ -93,7 +89,6 @@ export const AmountInput = ({
         />        
       </div>
       
-      {/* helper text */}
       <div className="mt-1 text-xs text-muted-foreground">
         {isIncome && "This will count as income"}
         {isExpense && "This will count as expense"}
@@ -101,4 +96,4 @@ export const AmountInput = ({
       </div>
     </div>
   );
-}
+};
