@@ -120,7 +120,7 @@ export const TransactionForm = ({
           control={control}
           name="date"
           render={({ field }) => {
-            const isFuture = field.value && isFutureDate(field.value);
+            const isFuture = field.value instanceof Date  && isFutureDate(field.value);
             
             return (
               <>
