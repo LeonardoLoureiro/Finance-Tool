@@ -13,7 +13,6 @@ import { useGetCategory } from "@/features/categories/api/use-get-categorie";
 import { CategoryForm } from "@/features/categories/components/category-form";
 import { useOpenCategory } from "@/features/categories/hooks/use-open-category";
 import { useConfirm } from "@/hooks/use-confirm";
-import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useMemo } from "react";
 import { z } from "zod";
@@ -36,15 +35,11 @@ export const EditCategorySheet = () => {
   // while Category info is fetched, show form as loading
   const isLoading = CategoryQuery.isLoading;
 
-  const queryClient = useQueryClient();
   const onSubmit = (values: FormValues) => {
     // send values to db, already checked types match
     editMutation.mutate(values, {
       // once submitted successfully, close the sheet.
       onSuccess: () => {
-        // invalidate queries to refresh data on table
-        queryClient.invalidateQueries({ queryKey: ["transactions"] });
-        queryClient.invalidateQueries({ queryKey: ["accounts"] });
         onClose();
       }
     });
