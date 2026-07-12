@@ -99,6 +99,17 @@ export const TransactionForm = ({
     // onSubmit(apiValues);
   }
 
+  // Add this inside your TransactionForm component, before the return statement
+  const isFutureDate = (date: Date) => {
+    const today = new Date();
+
+    // Create a date for tomorrow to compare
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    return date > tomorrow;
+  };
+
   return (
     <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 px-4">
       
@@ -108,17 +119,33 @@ export const TransactionForm = ({
         <Controller
           control={control}
           name="date"
-          render={({ field }) => (
-            <DatePicker
-              value={field.value as Date | undefined}
-              onChange={field.onChange}
-              disabled={disabled}
-              placeholder="Select a date"
-            />
-          )}
+          render={({ field }) => {
+            const isFuture = field.value && isFutureDate(field.value);
+            
+            return (
+              <>
+                <DatePicker
+                  value={field.value as Date | undefined}
+                  onChange={field.onChange}
+                  disabled={disabled}
+                  placeholder="Select a date"
+                  className={isFuture ? "border-yellow-400" : ""}
+                />
+                {isFuture && (
+                  <div className="mt-1 px-3 py-1.5 rounded-md bg-yellow-50 border border-yellow-200">
+                    <p className="text-xs text-yellow-700 flex items-center gap-1.5">
+                      <span className="text-sm">📅</span>
+                      Future transaction - this will appear in upcoming budgets
+                    </p>
+                  </div>
+                )}
+              </>
+            );
+          }}
         />
+
         {errors.date && (
-          <p className="text-sm text-red-500">{errors.date.message}</p>
+          <p className="text-xs text-red-400 mt-0.5">{errors.date.message}</p>
         )}
       </div>
 
@@ -140,7 +167,7 @@ export const TransactionForm = ({
           )}
         />
         {errors.accountId && (
-          <p className="text-sm text-red-500">{errors.accountId.message}</p>
+          <p className="text-xs text-red-400 mt-0.5">{errors.accountId.message}</p>
         )}
       </div>
 
@@ -162,7 +189,7 @@ export const TransactionForm = ({
           )}
         />
         {errors.categoryId && (
-          <p className="text-sm text-red-500">{errors.categoryId.message}</p>
+          <p className="text-xs text-red-400 mt-0.5">{errors.categoryId.message}</p>
         )}
       </div>
 
@@ -176,17 +203,17 @@ export const TransactionForm = ({
           {...register("payee")}
         />
         {errors.payee && (
-          <p className="text-sm text-red-500">{errors.payee.message}</p>
+          <p className="text-xs text-red-400 mt-0.5">{errors.payee.message}</p>
         )}
       </div>
 
       {/* amount Field */}
       <div className="space-y-2">
         <Label htmlFor="amount">
-        Amount
-        <span className="ml-2 text-sm text-muted-foreground">
-          (Use + for income, - for expenses)
-        </span>
+          Amount
+          <span className="ml-2 text-sm text-muted-foreground">
+            (Use + for income, - for expenses)
+          </span>
         </Label>
         
         <Controller
@@ -214,7 +241,7 @@ export const TransactionForm = ({
         />
 
         {errors.amount && (
-          <p className="text-sm text-red-500">{errors.amount.message}</p>
+          <p className="text-xs text-red-400 mt-0.5">{errors.amount.message}</p>
         )}
       </div>
 
@@ -229,7 +256,7 @@ export const TransactionForm = ({
           {...register("notes")}
         />
         {errors.notes && (
-          <p className="text-sm text-red-500">{errors.notes.message}</p>
+          <p className="text-xs text-red-400 mt-0.5">{errors.notes.message}</p>
         )}
       </div>
 
