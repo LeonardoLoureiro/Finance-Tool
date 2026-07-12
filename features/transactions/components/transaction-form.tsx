@@ -14,15 +14,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { AmountInput } from "@/components/amount-input";
 import { insertTransactionsSchema } from "@/db/schema";
 import { Trash } from "lucide-react";
+import { convertAmountToMilliUnits } from "@/lib/utils";
 
 // easier to create own form schema for the form, 
 // as the api schema has some extra fields that are not needed for the form.
 const formSchema = z.object({
-  date: z.coerce.date(),
-  accountId: z.string(),
+  date: z.coerce.date({
+    error: "Date is required",
+  }),
+  accountId: z.string().min(1, "Please select an account"),
   categoryId: z.string().nullable().optional(),
-  payee: z.string().max(100),
-  amount: z.coerce.number(),
+  payee: z.string().min(1, "Payee is required").max(100, "Payee is too long"),
+  amount: z.coerce.number({
+    error: "Amount is required",
+  }).refine((val) => val !== 0, {
+    message: "Amount cannot be zero",
+  }),
   notes: z.string().nullable().optional(),
 });
 
@@ -76,8 +83,20 @@ export const TransactionForm = ({
     reset(defaultValues);
   }, [defaultValues, reset]);
 
+  // finally, when pressing submit send to server
   const onFormSubmit = (values: FormValues) => {
-    console.log({values});
+    const amount = Number(values.amount) || 0;
+    const milliUnitsAmount = convertAmountToMilliUnits(amount);
+    
+    // convert ot submitable vals
+    const apiValues: ApiValues = {
+      ...values,
+      amount: milliUnitsAmount, // already in milliunits
+    };
+    
+    console.log(apiValues);
+    
+    // onSubmit(apiValues);
   }
 
   return (
@@ -175,20 +194,20 @@ export const TransactionForm = ({
           name="amount"
           render={({ field }) => {
             // Convert milliunits to pounds for display
-            const displayValue = field.value !== undefined && field.value !== null && field.value !== 0
-              ? (Number(field.value) / 1000).toFixed(2) 
-              : "";
+            // Convert to display value - show empty when 0 or undefined
+            const displayValue = field.value && field.value !== 0 
+                    ? field.value.toString() 
+                    : "";
 
             return (
               <AmountInput
                 value={displayValue}
                 onChange={(value) => {
-                  // Convert pounds to milliunits for storage
                   const numValue = parseFloat(value || "0");
-                  const milliunits = Math.round(numValue * 1000);
-                  field.onChange(milliunits);
+                  field.onChange(numValue);
                 }}
                 disabled={disabled}
+                placeholder="0.00"
               />
             );
           }}
