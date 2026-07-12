@@ -94,9 +94,7 @@ export const TransactionForm = ({
       amount: milliUnitsAmount, // already in milliunits
     };
     
-    console.log(apiValues);
-    
-    // onSubmit(apiValues);
+    onSubmit(apiValues);
   }
 
   // Add this inside your TransactionForm component, before the return statement
