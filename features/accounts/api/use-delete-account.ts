@@ -29,6 +29,10 @@ export const useDeleteAccount = (id?: string) => {
         queryKey: ["accounts"],
       });
 
+      queryClient.invalidateQueries({
+        queryKey: ["transactions"],
+      });
+
       queryClient.removeQueries({
         queryKey: ["account", { id }],
       });

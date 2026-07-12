@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/sheet";
 
 import { insertCategoriesSchema } from "@/db/schema";
-import { useDeleteCategory } from "@/features/categories/api/use-delete-categories";
+import { useDeleteCategory } from "@/features/categories/api/use-delete-category";
 import { useEditCategory } from "@/features/categories/api/use-edit-categories";
 import { useGetCategory } from "@/features/categories/api/use-get-categorie";
 import { CategoryForm } from "@/features/categories/components/category-form";
