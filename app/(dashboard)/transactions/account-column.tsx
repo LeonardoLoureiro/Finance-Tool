@@ -17,6 +17,11 @@ export const AccountColumn = ({
   // get edit account hook
   const { onOpen } = useOpenAccount();
 
+  // if account is a string (from import preview), just display it
+  if (typeof account === 'string') {
+    return <span>{account}</span>;
+  }
+
   return (
     <button
       // when user clicked on account column value, open editing sheet 

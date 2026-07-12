@@ -18,6 +18,11 @@ export const CategoryColumn = ({
   const { onOpen: onOpenCategory } = useOpenCategory();
   const { onOpen: onOpenTransaction } = useOpenTransaction();
 
+  // if category is a string (from import preview), just display it
+  if (typeof category === 'string') {
+    return <span>{category}</span>;
+  }
+
   // if no category, offer to add one
   if (!category || !categoryId) {
     return (
