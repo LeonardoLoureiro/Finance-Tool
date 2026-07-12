@@ -16,6 +16,7 @@ import { useMemo } from "react";
 import { z } from "zod";
 import { useDeleteAccount } from "@/features/accounts/api/use-delete-account";
 import { useConfirm } from "@/hooks/use-confirm";
+import { useQueryClient } from "@tanstack/react-query";
 
 // just use the name, since we're only adding an account name.
 const formSchema = insertAccountsSchema.pick({
@@ -34,12 +35,16 @@ export const EditAccountSheet = () => {
 
   // while account info is fetched, show form as loading
   const isLoading = accountQuery.isLoading;
-
+  
+  const queryClient = useQueryClient();
   const onSubmit = (values: FormValues) => {
     // send values to db, already checked types match
     editMutation.mutate(values, {
       // once submitted successfully, close the sheet.
       onSuccess: () => {
+        // invalidate queries to refresh data on table
+        queryClient.invalidateQueries({ queryKey: ["transactions"] });
+        queryClient.invalidateQueries({ queryKey: ["accounts"] });
         onClose();
       }
     });
