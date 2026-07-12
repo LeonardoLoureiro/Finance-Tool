@@ -50,12 +50,17 @@ export const AmountInput = ({
                     {...props}
                     type="button"
                     onClick={onReverseValue}
-                    className="flex items-center justify-center rounded-full hover:bg-accent hover:text-accent-foreground size-6 transition-colors"
+                    className={cn(
+                      "flex items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground size-6 transition-colors",
+                      isIncome && "text-emerald-500 hover:bg-emerald-600",
+                      isExpense && "text-rose-500 hover:bg-rose-600",
+                      !hasValue && "text-muted-foreground"
+                    )}
                   >
-                    {isIncome && <PlusCircle className="size-4 text-emerald-500" />}
-                    {isExpense && <MinusCircle className="size-4 text-rose-500" />}
+                    {isIncome && <PlusCircle className="size-4" />}
+                    {isExpense && <MinusCircle className="size-4" />}
                     {!isIncome && !isExpense && !hasValue && (
-                      <Info className="size-4 text-muted-foreground" />
+                      <Info className="size-4" />
                     )}
                   </button>
                 )}
