@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MoveLeft } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ImportTable } from "./import-table";
 import { UploadButton } from "./upload-button";
 
@@ -29,23 +29,7 @@ type Props = {
   importResults: ImportResult;
 };
 
-// column options for mapping
-const columnOptions = [
-  "amount",
-  "payee",
-  "date",
-  "category",
-  "account",
-  "notes",
-];
-
-// when import data, AT LEAST these MUST be present
-const requiredColumns = [
-  "amount",
-  "payee",
-  "date",
-  "account",
-]
+const requiredColumns = ["amount", "payee", "date", "account"];
 
 export const ImportCard = ({
   data,
@@ -55,54 +39,84 @@ export const ImportCard = ({
   onUpload,
   importResults,
 }: Props) => {
-  // State for column mapping
   const [selectColumns, setSelectColumns] = useState<SelectedColumnsState>({});
 
-  const originalHeaders =
-    data.length > 0 ? Object.keys(data[0]) : [];
-  
-  // process which header to show
+  const originalHeaders = data.length > 0 ? Object.keys(data[0]) : [];
+
+  // auto-detect and pre-select columns
+  useEffect(() => {
+    if (data.length > 0 && Object.keys(selectColumns).length === 0) {
+      const autoMappings: SelectedColumnsState = {};
+      const headers = Object.keys(data[0]);
+      
+      headers.forEach((header, index) => {
+        const headerLower = header.toLowerCase();
+        
+        // date detection
+        if (headerLower.includes('date') || headerLower.includes('time') || headerLower.includes('transaction')) {
+          autoMappings[`column_${index}`] = 'date';
+        } 
+        
+        // payee detection
+        else if (headerLower.includes('payee') || headerLower.includes('vendor') || headerLower.includes('merchant') || headerLower.includes('name')) {
+          autoMappings[`column_${index}`] = 'payee';
+        } 
+
+        // amount detection
+        else if (headerLower.includes('amount') || headerLower.includes('price') || headerLower.includes('total') || headerLower.includes('cost')) {
+          autoMappings[`column_${index}`] = 'amount';
+        } 
+        
+        // account detection
+        else if (headerLower.includes('account') || headerLower.includes('wallet') || headerLower.includes('bank')) {
+          autoMappings[`column_${index}`] = 'account';
+        } 
+
+        // category detection
+        else if (headerLower.includes('category') || headerLower.includes('type') || headerLower.includes('tag')) {
+          autoMappings[`column_${index}`] = 'category';
+        } 
+
+        // notes detection
+        else if (headerLower.includes('note') || headerLower.includes('description') || headerLower.includes('memo')) {
+          autoMappings[`column_${index}`] = 'notes';
+        }
+      });
+      
+      setSelectColumns(autoMappings);
+    }
+  }, [data]);
+
+  // display headers with visual indicator of what was mapped
   const displayHeaders = originalHeaders.map((header, index) => {
     const selected = selectColumns[`column_${index}`];
-
     return selected ?? "Skip";
   });
 
-  // what to show on the rows of the table itself
   const displayBody = data.map((row) => {
     return originalHeaders.map((_, columnIndex) => {
-
-      const selectedColumn =
-        selectColumns[`column_${columnIndex}`];
-
-      if (!selectedColumn) {
-        return "";
-      }
-
+      const selectedColumn = selectColumns[`column_${columnIndex}`];
+      if (!selectedColumn) return "";
+      
       const sourceIndex = originalHeaders.findIndex(
-        (header) =>
-          header.toLowerCase() === selectedColumn.toLowerCase()
+        (header) => header.toLowerCase() === selectedColumn.toLowerCase()
       );
-
-      return String(
-        row[originalHeaders[sourceIndex]]
-      );
+      
+      return String(row[originalHeaders[sourceIndex]]);
     });
   });
 
-  // map selected columns to their relavant data
   const mappedImportData = data.map((row) => {
     const mappedRow: Record<string, any> = {};
 
     Object.entries(selectColumns).forEach(([key, value]) => {
       if (!value) return;
 
-      // find the column index where the header matches the selected value
       const sourceColumnIndex = originalHeaders.findIndex(
         (header) => header.toLowerCase() === value.toLowerCase()
       );
 
-      if (sourceColumnIndex === -1) return; // column not found
+      if (sourceColumnIndex === -1) return;
 
       const sourceHeader = originalHeaders[sourceColumnIndex];
       mappedRow[value] = row[sourceHeader];
@@ -111,10 +125,7 @@ export const ImportCard = ({
     return mappedRow;
   });
 
-  const onTableSelectedChange = (
-    columnIndex: number,
-    value: string | null
-  ) => {
+  const onTableSelectedChange = (columnIndex: number, value: string | null) => {
     setSelectColumns((prev) => {
       const updated = { ...prev };
 
@@ -129,30 +140,23 @@ export const ImportCard = ({
         }
       });
 
-      updated[`column_${columnIndex}`] = value;      
-
+      updated[`column_${columnIndex}`] = value;
       return updated;
     });
   };
 
-  // have REQUIRED columns of data been chosen?
-  // if not then cannot import anything yet.
   const hasRequiredColumns = requiredColumns.every((column) =>
     Object.values(selectColumns).includes(column)
   );
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-10 -mt-5">
-        <Button
-          variant="ghost"
-          onClick={onCancel}
-          className="mb-4 min-h-11 min-w-11 z-50"
-        >
+      <Button variant="ghost" onClick={onCancel} className="mb-4 relative z-50">
         <MoveLeft className="mr-2 h-4 w-4" />
         Back to transactions
       </Button>
-
-      <Card>
+      
+      <Card className="relative z-0">
         <CardHeader className="flex flex-col gap-y-2 lg:flex-row lg:items-center lg:justify-between">
           <CardTitle className="text-xl line-clamp-1">
             Import Transactions
@@ -160,8 +164,8 @@ export const ImportCard = ({
           {importResults.data.length > 0 && (
             <Button 
               onClick={() => onSubmit(mappedImportData)} 
-              disabled={isPending || !hasRequiredColumns}>
-              
+              disabled={isPending || !hasRequiredColumns}
+            >
               {isPending ? "Importing..." : `Import ${importResults.meta.total} Transactions`}
             </Button>
           )}
@@ -179,7 +183,6 @@ export const ImportCard = ({
           )}
         </CardContent>
       </Card>
-
     </div>
   );
 };
