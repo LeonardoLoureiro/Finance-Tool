@@ -26,34 +26,54 @@ export const ImportTable = ({
   selectColumns,
   onTableSelectedChange,
 }: Props) => {
-  console.log(headers);
+  
+  // has user selected any columns yet? 
+  // if not then display on table no data/rows message until they do.
+  const hasMappedColumns = Object.values(selectColumns).some(
+    (value) => value !== null
+  );
 
   return (
     <div className="rounded-md border overflow-hidden">
-      <Table>
+      <Table className="table-auto">
         <TableHeader className="bg-muted">
-        <TableRow>
-          {headers.map((header, index) => (
-            <TableHead key={index}>
-              <TableHeadSelect
-                columnIndex={index}
-                selectColumns={selectColumns}
-                onChange={onTableSelectedChange}
-              />
-            </TableHead>
-          ))}
-        </TableRow>
-      </TableHeader>
-        <TableBody>
-            {body.map((row: string[], index) => (
-              <TableRow key={index}>
-                {row.map((cell: string, index) => (
-                  <TableCell key={index}>
-                    {cell}
-                  </TableCell>
-                ))}
-              </TableRow>
+          <TableRow>
+            {headers.map((header, index) => (
+              <TableHead key={index}>
+                <div className="space-y-1">
+                  <TableHeadSelect
+                    columnIndex={index}
+                    selectColumns={selectColumns}
+                    onChange={onTableSelectedChange}
+                  />
+                </div>
+              </TableHead>
             ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+            {hasMappedColumns ? (
+              body.map((row: string[], index) => (
+                <TableRow key={index}>
+                  {row.map((cell: string, index) => (
+                    <TableCell key={index}>
+                      {cell}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              )
+            )) : (
+              <TableRow>
+                <TableCell 
+                  colSpan={headers.length}
+                  className="h-32 text-center text-sm text-muted-foreground"
+                >
+                  No columns selected.
+                  <br />
+                  Please select at least one column to import.
+                </TableCell>
+              </TableRow>
+            )}
         </TableBody>
       </Table>
     </div>
