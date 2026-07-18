@@ -2,9 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MoveLeft } from "lucide-react";
+import { CheckCircle2, Circle, MoveLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ImportTable } from "./import-table";
+import { cn } from "@/lib/utils";
 
 type ImportResult = {
   data: any[];
@@ -167,9 +168,39 @@ export const ImportCard = ({
       
       <Card className="relative z-0">
         <CardHeader className="flex flex-col gap-y-2 lg:flex-row lg:items-center lg:justify-between">
-          <CardTitle className="text-xl line-clamp-1">
-            Import Transactions
-          </CardTitle>
+          <div className="flex flex-col">
+            <CardTitle className="text-xl line-clamp-1">
+              Import Transactions
+            </CardTitle>
+            
+            {/* Show required columns status */}
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+              <span>Required: </span>
+              {requiredColumns.map((col) => {
+                const mapped = Object.values(selectColumns).includes(col);
+
+                return (
+                  <div
+                    key={col}
+                    className={cn(
+                      "flex items-center gap-1 rounded-full border px-3 py-1 text-sm",
+                      mapped
+                        ? "border-green-200 bg-green-50 text-green-700"
+                        : "border-muted bg-muted/40 text-muted-foreground"
+                    )}
+                  >
+                    {mapped ? (
+                      <CheckCircle2 className="h-4 w-4" />
+                    ) : (
+                      <Circle className="h-4 w-4" />
+                    )}
+                    <span className="capitalize">{col}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          
           {importResults.data.length > 0 && (
             <Button 
               onClick={() => onSubmit(mappedImportData)} 
