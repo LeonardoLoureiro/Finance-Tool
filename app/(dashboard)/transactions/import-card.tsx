@@ -89,19 +89,21 @@ export const ImportCard = ({
     });
   });
 
-
+  // map selected columns to their relavant data
   const mappedImportData = data.map((row) => {
     const mappedRow: Record<string, any> = {};
 
     Object.entries(selectColumns).forEach(([key, value]) => {
       if (!value) return;
 
-      const sourceColumnIndex = Number(
-        key.replace("column_", "")
+      // find the column index where the header matches the selected value
+      const sourceColumnIndex = originalHeaders.findIndex(
+        (header) => header.toLowerCase() === value.toLowerCase()
       );
 
-      const sourceHeader = originalHeaders[sourceColumnIndex];
+      if (sourceColumnIndex === -1) return; // column not found
 
+      const sourceHeader = originalHeaders[sourceColumnIndex];
       mappedRow[value] = row[sourceHeader];
     });
 
@@ -113,7 +115,9 @@ export const ImportCard = ({
     value: string | null
   ) => {
     setSelectColumns((prev) => {
+      console.log(columnIndex, value);
       const updated = { ...prev };
+      console.log(updated);
 
       if (value === "skip") {
         delete updated[`column_${columnIndex}`];
@@ -127,6 +131,8 @@ export const ImportCard = ({
       });
 
       updated[`column_${columnIndex}`] = value;
+      console.log(updated);
+      
 
       return updated;
     });
