@@ -134,8 +134,6 @@ export const ImportCard = ({
           )}
         </CardHeader>
         <CardContent className="space-y-4">
-          <UploadButton onUpload={onUpload} />
-          
           {data.length > 0 && (
             <div className="mt-4">
               <ImportTable
