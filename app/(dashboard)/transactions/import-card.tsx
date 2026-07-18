@@ -143,14 +143,15 @@ export const ImportCard = ({
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-10 -mt-5">
-      <Button
-        variant="ghost"
-        onClick={onCancel}
-        className="mb-4"
-      >
+        <Button
+          variant="ghost"
+          onClick={onCancel}
+          className="mb-4 min-h-11 min-w-11 z-50"
+        >
         <MoveLeft className="mr-2 h-4 w-4" />
         Back to transactions
       </Button>
+
       <Card>
         <CardHeader className="flex flex-col gap-y-2 lg:flex-row lg:items-center lg:justify-between">
           <CardTitle className="text-xl line-clamp-1">
@@ -178,6 +179,7 @@ export const ImportCard = ({
           )}
         </CardContent>
       </Card>
+
     </div>
   );
 };
