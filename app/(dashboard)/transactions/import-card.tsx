@@ -39,6 +39,13 @@ const columnOptions = [
   "notes",
 ];
 
+// when import data, AT LEAST these MUST be present
+const requiredColumns = [
+  "amount",
+  "payee",
+  "date",
+]
+
 export const ImportCard = ({
   data,
   onCancel,
@@ -112,6 +119,12 @@ export const ImportCard = ({
     });
   };
 
+  // have REQUIRED columns of data been chosen?
+  // if not then cannot import anything yet.
+  const hasRequiredColumns = requiredColumns.every((column) =>
+    Object.values(selectColumns).includes(column)
+  );
+
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-10 -mt-5">
       <Button
@@ -128,7 +141,7 @@ export const ImportCard = ({
             Import Transactions
           </CardTitle>
           {importResults.data.length > 0 && (
-            <Button onClick={onSubmit} disabled={isPending}>
+            <Button onClick={onSubmit} disabled={isPending || !hasRequiredColumns}>
               {isPending ? "Importing..." : `Import ${importResults.meta.total} Transactions`}
             </Button>
           )}
