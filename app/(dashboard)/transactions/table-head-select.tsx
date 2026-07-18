@@ -32,13 +32,6 @@ export const TableHeadSelect = ({
 }: Props) => {
   const currentSelection = selectColumns[`column_${columnIndex}`];
 
-  console.log({
-    columnIndex,
-    currentSelection,
-    selectColumns,
-  });
-  
-
   return (
     <Select
       value={currentSelection || ""}

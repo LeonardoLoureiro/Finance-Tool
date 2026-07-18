@@ -61,13 +61,16 @@ const TransactionsPage = () => {
     setImportResults(INITIAL_IMPORT_RESULTS);
   };
 
-  const onSubmitImport = () => {
-    bulkCreate.mutate(importResults.data, {
-      onSuccess: () => {
-        setVariant(VARIANTS.LIST);
-        setImportResults(INITIAL_IMPORT_RESULTS);
-      },
-    });
+  // when importing, and user presses "import X transactions",
+  // this code happens
+  const onSubmitImport = (mappedData: any[]) => {
+    console.log(mappedData);
+    // bulkCreate.mutate(mappedData, {
+    //   onSuccess: () => {
+    //     setVariant(VARIANTS.LIST);
+    //     setImportResults(INITIAL_IMPORT_RESULTS);
+    //   },
+    // });
   };
 
   if (transactionsQuery.isLoading) {

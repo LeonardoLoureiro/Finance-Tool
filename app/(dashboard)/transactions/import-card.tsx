@@ -23,7 +23,7 @@ interface SelectedColumnsState {
 type Props = {
   data: any[];
   onCancel: () => void;
-  onSubmit: () => void;
+  onSubmit: (data: any[]) => void;
   isPending?: boolean;
   onUpload: (results: ImportResult) => void;
   importResults: ImportResult;
@@ -59,21 +59,15 @@ export const ImportCard = ({
 
   const originalHeaders =
     data.length > 0 ? Object.keys(data[0]) : [];
-
-  const headers = originalHeaders.map((header, index) => {
-    return selectColumns[`column_${index}`] ?? header;
-  });
   
+  // process which header to show
   const displayHeaders = originalHeaders.map((header, index) => {
     const selected = selectColumns[`column_${index}`];
 
     return selected ?? "Skip";
   });
 
-  const body = data.map((item) =>
-    Object.values(item).map((value) => String(value))
-  );
-
+  // what to show on the rows of the table itself
   const displayBody = data.map((row) => {
     return originalHeaders.map((_, columnIndex) => {
 
@@ -93,6 +87,25 @@ export const ImportCard = ({
         row[originalHeaders[sourceIndex]]
       );
     });
+  });
+
+
+  const mappedImportData = data.map((row) => {
+    const mappedRow: Record<string, any> = {};
+
+    Object.entries(selectColumns).forEach(([key, value]) => {
+      if (!value) return;
+
+      const sourceColumnIndex = Number(
+        key.replace("column_", "")
+      );
+
+      const sourceHeader = originalHeaders[sourceColumnIndex];
+
+      mappedRow[value] = row[sourceHeader];
+    });
+
+    return mappedRow;
   });
 
   const onTableSelectedChange = (
@@ -141,7 +154,10 @@ export const ImportCard = ({
             Import Transactions
           </CardTitle>
           {importResults.data.length > 0 && (
-            <Button onClick={onSubmit} disabled={isPending || !hasRequiredColumns}>
+            <Button 
+              onClick={() => onSubmit(mappedImportData)} 
+              disabled={isPending || !hasRequiredColumns}>
+              
               {isPending ? "Importing..." : `Import ${importResults.meta.total} Transactions`}
             </Button>
           )}
