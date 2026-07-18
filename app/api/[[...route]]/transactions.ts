@@ -5,6 +5,7 @@ import {
   insertTransactionsSchema,
   transactions
 } from "@/db/schema";
+import { convertAmountToMilliUnits } from "@/lib/utils";
 import { clerkMiddleware, getAuth } from "@hono/clerk-auth";
 import { zValidator } from "@hono/zod-validator";
 import { createId } from "@paralleldrive/cuid2";
@@ -13,6 +14,25 @@ import { and, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import z from "zod";
+
+
+// when importing data from csv files, this schema
+// MUST be followed so bare minimum of data
+// can be aligned with existing db schema.
+// In this case, we only really need the amount,
+// payee and date of a transactions, everything else
+// is optional.
+const importTransactionSchema = z.object({
+  amount: z.string(),
+  payee: z.string().min(1),
+  date: z.coerce.date(),
+
+  account: z.string().min(1),
+
+  category: z.string().optional(),
+
+  notes: z.string().optional(),
+});
 
 const app = new Hono()
   // GET transaction within range
@@ -169,45 +189,199 @@ const app = new Hono()
   )
 
   // create multiple transactions at once
+  // create multiple transactions at once
   .post(
     "/bulk-create",
     clerkMiddleware(),
-
-    // expect an array of transactions
     zValidator(
       "json",
-      z.array(
-        insertTransactionsSchema.omit({
-          id: true,
-        })
-      )
+      z.array(importTransactionSchema)
     ),
-
     async (context) => {
-      const auth = getAuth(context);
-      const values = context.req.valid("json");
+      try {
+        const auth = getAuth(context);
+        const values = context.req.valid("json");
 
-      if (!auth?.userId) {
-        throw new HTTPException(401, {
-          res: context.json({ error: "Unauthorised." }, 401),
+        if (!auth?.userId) {
+          throw new HTTPException(401, {
+            res: context.json({ error: "Unauthorised." }, 401),
+          });
+        }
+
+        // Step 1: Get unique account names
+        const accountNames = [
+          ...new Set(
+            values.map(
+              (transaction) => transaction.account
+            )
+          ),
+        ];
+    
+        // Step 2: Get unique category names
+        const categoryNames = [
+          ...new Set(
+            values
+              .map(
+                (transaction) => transaction.category
+              )
+              .filter(Boolean)
+          ),
+        ] as string[];
+    
+        // Step 3: Find existing accounts
+        const existingAccounts =
+          accountNames.length > 0
+            ? await db
+                .select()
+                .from(accounts)
+                .where(
+                  and(
+                    eq(accounts.userId, auth.userId),
+                    inArray(accounts.name, accountNames)
+                  )
+                )
+            : [];
+    
+        // Step 4: Find existing categories
+        const existingCategories =
+          categoryNames.length > 0
+            ? await db
+                .select()
+                .from(categories)
+                .where(
+                  and(
+                    eq(categories.userId, auth.userId),
+                    inArray(categories.name, categoryNames)
+                  )
+                )
+            : [];
+    
+        // Step 5: Create account map
+        const accountMap = new Map(
+          existingAccounts.map(
+            (account) => [
+              account.name,
+              account.id,
+            ]
+          )
+        );
+    
+        // Step 6: Create category map
+        const categoryMap = new Map(
+          existingCategories.map(
+            (category) => [
+              category.name,
+              category.id,
+            ]
+          )
+        );
+    
+        // Step 7: Create missing accounts
+        const missingAccounts =
+          accountNames.filter(
+            (name) =>
+              !accountMap.has(name)
+          );
+    
+        if (missingAccounts.length > 0) {
+          const newAccounts =
+            await db
+              .insert(accounts)
+              .values(
+                missingAccounts.map(
+                  (name) => ({
+                    id: createId(),
+                    name,
+                    userId: auth.userId,
+                  })
+                )
+              )
+              .returning();
+    
+          newAccounts.forEach(
+            (account) => {
+              accountMap.set(
+                account.name,
+                account.id
+              );
+            }
+          );
+        }
+        
+        // Step 8: Create missing categories
+        const missingCategories =
+          categoryNames.filter(
+            (name) =>
+              !categoryMap.has(name)
+          );
+    
+        if (missingCategories.length > 0) {
+          const newCategories =
+            await db
+              .insert(categories)
+              .values(
+                missingCategories.map(
+                  (name) => ({
+                    id: createId(),
+                    name,
+                    userId: auth.userId,
+                  })
+                )
+              )
+              .returning();
+    
+          newCategories.forEach(
+            (category) => {
+              categoryMap.set(
+                category.name,
+                category.id
+              );
+            }
+          );
+        }
+
+        // Step 9: Assemble transaction rows
+        const rows = values.map((transaction, index) => {
+          const accountId = accountMap.get(transaction.account);
+          if (!accountId) {
+            throw new Error(`Account not found for transaction ${index}: ${transaction.account}`);
+          }
+
+          const categoryId = transaction.category 
+            ? categoryMap.get(transaction.category) 
+            : null;
+          
+          if (transaction.category && !categoryId) {
+            throw new Error(`Category not found for transaction ${index}: ${transaction.category}`);
+          }
+
+          const amountInMilliunits = convertAmountToMilliUnits(Number(transaction.amount));
+    
+          return {
+            id: createId(),
+            amount: amountInMilliunits,
+            payee: transaction.payee,
+            date: transaction.date,
+            notes: transaction.notes,
+            accountId: accountId,
+            categoryId: categoryId,
+          };
         });
+    
+        // Step 10: Insert transactions
+        const insertedTransactions =
+          await db
+            .insert(transactions)
+            .values(rows)
+            .returning();
+        return context.json({ data: insertedTransactions });
+        
+      } catch (error) {
+        return context.json({ 
+          error: "Internal server error",
+          details: error instanceof Error ? error.message : String(error)
+        }, 500);
       }
-
-      // map each transaction and attach required server fields
-      // ensuring that a new id is created for each new transaction.
-      const rows = values.map((transactions) => ({
-        id: createId(),
-        ...transactions,
-        // IMPORTANT: ensure ownership is enforced server-side
-        // (prevents user assigning to other accounts later)
-      }));
-
-      const data = await db
-        .insert(transactions)
-        .values(rows)
-        .returning();
-
-      return context.json({ data });
     }
   )
 

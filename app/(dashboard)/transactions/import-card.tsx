@@ -44,6 +44,7 @@ const requiredColumns = [
   "amount",
   "payee",
   "date",
+  "account",
 ]
 
 export const ImportCard = ({
@@ -115,9 +116,7 @@ export const ImportCard = ({
     value: string | null
   ) => {
     setSelectColumns((prev) => {
-      console.log(columnIndex, value);
       const updated = { ...prev };
-      console.log(updated);
 
       if (value === "skip") {
         delete updated[`column_${columnIndex}`];
@@ -130,9 +129,7 @@ export const ImportCard = ({
         }
       });
 
-      updated[`column_${columnIndex}`] = value;
-      console.log(updated);
-      
+      updated[`column_${columnIndex}`] = value;      
 
       return updated;
     });
