@@ -3,9 +3,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MoveLeft } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ImportTable } from "./import-table";
-import { UploadButton } from "./upload-button";
 
 type ImportResult = {
   data: any[];
@@ -29,7 +28,12 @@ type Props = {
   importResults: ImportResult;
 };
 
-const requiredColumns = ["amount", "payee", "date", "account"];
+const requiredColumns = [
+  "amount", 
+  "payee", 
+  "date", 
+  "account"
+];
 
 export const ImportCard = ({
   data,
@@ -42,6 +46,11 @@ export const ImportCard = ({
   const [selectColumns, setSelectColumns] = useState<SelectedColumnsState>({});
 
   const originalHeaders = data.length > 0 ? Object.keys(data[0]) : [];
+
+  // pass available fields to TableHeadSelect
+  // for example, if csv does not have a "notes" field,
+  // then simply do not give user options to select it!
+  const existingFields = originalHeaders.map(h => h.toLowerCase());
 
   // auto-detect and pre-select columns
   useEffect(() => {
@@ -178,6 +187,7 @@ export const ImportCard = ({
                 body={displayBody}
                 selectColumns={selectColumns}
                 onTableSelectedChange={onTableSelectedChange}
+                availableFields={existingFields}
               />
             </div>
           )}

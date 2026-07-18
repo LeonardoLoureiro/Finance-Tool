@@ -9,32 +9,46 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
+const options = [
+  // required data to import
+  "amount",
+  "payee",
+  "date",
+
+  // optional
+  "account",
+  "category",
+  "notes",
+];
+
+
 type Props = {
   columnIndex: number;
   // keys are stringified like `column_${index}`
   selectColumns: Record<string, string | null>;
   onChange: (columnIndex: number, value: string | null) => void;
+  availableFields?: string[];
 };
-
-const options = [
-  "amount",
-  "payee",
-  "date",
-  "category",
-  "account",
-  "notes",
-];
 
 export const TableHeadSelect = ({
   columnIndex,
   selectColumns,
   onChange,
+  availableFields = [],
 }: Props) => {
   const currentSelection = selectColumns[`column_${columnIndex}`];
 
+  const availableOptions = options.filter(
+    (opt) => availableFields.includes(opt)
+  );
+
+  // Check if current selection is still valid
+  const isValidSelection = currentSelection && availableFields.includes(currentSelection);
+  const displayValue = isValidSelection ? currentSelection : "skip";
+
   return (
     <Select
-      value={currentSelection || ""}
+      value={displayValue}
       onValueChange={(value) => onChange(columnIndex, value)}
     >
       <SelectTrigger
@@ -51,24 +65,22 @@ export const TableHeadSelect = ({
       <SelectContent>
         {/* hardcoded as user may not want to include certain columns */}
         <SelectItem value="skip">Skip</SelectItem>
-        {options.map((option, index) => {
-          const disabled =
-            Object.entries(selectColumns).some(
-              ([key, value]) =>
-                key !== `column_${columnIndex}` &&
-                value === option
-            );
-            
+        {availableOptions.map((option) => {
+          const disabled = Object.entries(selectColumns).some(
+            ([key, value]) =>
+              key !== `column_${columnIndex}` && value === option
+          );
+
           return (
-            <SelectItem 
-              key={index}
+            <SelectItem
+              key={option}
               value={option}
               disabled={disabled}
               className="capitalize"
             >
               {option}
             </SelectItem>
-          )
+          );
         })}
       </SelectContent>
 

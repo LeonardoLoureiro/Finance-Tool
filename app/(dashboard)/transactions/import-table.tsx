@@ -18,6 +18,7 @@ type Props = {
     columnIndex: number,
     value: string | null
   ) => void;
+  availableFields: string[];
 };
 
 export const ImportTable = ({
@@ -25,6 +26,7 @@ export const ImportTable = ({
   body,
   selectColumns,
   onTableSelectedChange,
+  availableFields,
 }: Props) => {
   
   // has user selected any columns yet? 
@@ -45,6 +47,7 @@ export const ImportTable = ({
                     columnIndex={index}
                     selectColumns={selectColumns}
                     onChange={onTableSelectedChange}
+                    availableFields={availableFields}
                   />
                 </div>
               </TableHead>
