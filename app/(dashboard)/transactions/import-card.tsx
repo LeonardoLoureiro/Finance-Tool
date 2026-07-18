@@ -1,12 +1,11 @@
 "use client";
 
-import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MoveLeft } from "lucide-react";
+import { useState } from "react";
+import { ImportTable } from "./import-table";
 import { UploadButton } from "./upload-button";
-import { columns } from "./columns";
-import { Row } from "@tanstack/react-table";
 
 type ImportResult = {
   data: any[];
@@ -17,6 +16,10 @@ type ImportResult = {
   };
 };
 
+interface SelectedColumnsState {
+  [key: string]: string | null;
+}
+
 type Props = {
   data: any[];
   onCancel: () => void;
@@ -26,6 +29,16 @@ type Props = {
   importResults: ImportResult;
 };
 
+// column options for mapping
+const columnOptions = [
+  "amount",
+  "payee",
+  "date",
+  "category",
+  "account",
+  "notes",
+];
+
 export const ImportCard = ({
   data,
   onCancel,
@@ -34,12 +47,70 @@ export const ImportCard = ({
   onUpload,
   importResults,
 }: Props) => {
-  // Map import data to match the expected format
-  const mappedData = data.map((item: any) => ({
-    ...item,
-    account: item.accountName,
-    category: item.categoryName,
-  }));
+  // State for column mapping
+  const [selectColumns, setSelectColumns] = useState<SelectedColumnsState>({});
+
+  const originalHeaders =
+    data.length > 0 ? Object.keys(data[0]) : [];
+
+  const headers = originalHeaders.map((header, index) => {
+    return selectColumns[`column_${index}`] ?? header;
+  });
+  
+  const displayHeaders = originalHeaders.map((header, index) => {
+    const selected = selectColumns[`column_${index}`];
+
+    return selected ?? "Skip";
+  });
+
+  const body = data.map((item) =>
+    Object.values(item).map((value) => String(value))
+  );
+
+  const displayBody = data.map((row) => {
+    return originalHeaders.map((_, columnIndex) => {
+
+      const selectedColumn =
+        selectColumns[`column_${columnIndex}`];
+
+      if (!selectedColumn) {
+        return "";
+      }
+
+      const sourceIndex = originalHeaders.findIndex(
+        (header) =>
+          header.toLowerCase() === selectedColumn.toLowerCase()
+      );
+
+      return String(
+        row[originalHeaders[sourceIndex]]
+      );
+    });
+  });
+
+  const onTableSelectedChange = (
+    columnIndex: number,
+    value: string | null
+  ) => {
+    setSelectColumns((prev) => {
+      const updated = { ...prev };
+
+      if (value === "skip") {
+        delete updated[`column_${columnIndex}`];
+        return updated;
+      }
+
+      Object.keys(updated).forEach((key) => {
+        if (updated[key] === value) {
+          delete updated[key];
+        }
+      });
+
+      updated[`column_${columnIndex}`] = value;
+
+      return updated;
+    });
+  };
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-10 -mt-5">
@@ -67,12 +138,11 @@ export const ImportCard = ({
           
           {data.length > 0 && (
             <div className="mt-4">
-              <DataTable
-                columns={columns}
-                data={mappedData}
-                filterKey="payee"
-                disabled={isPending}
-                onDelete={() => {}}
+              <ImportTable
+                headers={displayHeaders}
+                body={displayBody}
+                selectColumns={selectColumns}
+                onTableSelectedChange={onTableSelectedChange}
               />
             </div>
           )}

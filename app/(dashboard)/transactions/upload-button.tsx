@@ -17,14 +17,31 @@ export const UploadButton = ({ onUpload }: Props) => {
   const { CSVReader } = useCSVReader();
 
   const handleUpload = (results: any) => {
-    const parsedData = results.data.slice(1).map((row: any) => ({
-      date: parseISO(row[0]),
-      payee: row[1],
-      amount: Math.round(parseFloat(row[2]) * 1000),
-      accountName: row[3] || "",
-      categoryName: row[4] || null,
-      notes: row[5] || null,
-    }));
+    // get headers from first row
+    const headers = results.data[0];
+    
+    // parse data starting from row 1
+    const parsedData = results.data.slice(1).map((row: any[]) => {
+      const obj: Record<string, string> = {};
+      headers.forEach((header: string, index: number) => {
+        let value = row[index]?.trim() || "";
+        
+        // try to parse date if it looks like one
+        if (header.toLowerCase().includes('date')) {
+          try {
+            const parsedDate = parseISO(value);
+            if (!isNaN(parsedDate.getTime())) {
+              value = parsedDate.toISOString();
+            }
+          } catch {
+            // keep as string
+          }
+        }
+        
+        obj[header.trim()] = value;
+      });
+      return obj;
+    });
 
     onUpload({
       data: parsedData,
