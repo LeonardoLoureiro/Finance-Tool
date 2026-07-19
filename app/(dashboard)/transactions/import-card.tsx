@@ -133,7 +133,13 @@ export const ImportCard = ({
     });
 
     return mappedRow;
-  });
+  })
+  .filter((row) => {
+    // remove completely empty rows
+    return Object.values(row).some((value) => {
+      return value !== undefined && value !== null && String(value).trim() !== '';
+    });
+  });;
 
   const onTableSelectedChange = (columnIndex: number, value: string | null) => {
     setSelectColumns((prev) => {
