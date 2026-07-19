@@ -1,3 +1,5 @@
+// features/transactions/api/summary.ts
+
 import { db } from "@/db/drizzle";
 import { clerkMiddleware, getAuth } from "@hono/clerk-auth";
 import { zValidator } from "@hono/zod-validator";
@@ -19,124 +21,9 @@ const app = new Hono()
         from: z.string().optional(),
         to: z.string().optional(),
         accountId: z.string().optional(),
-    })),
-
-    async (context) => {
-      const auth = getAuth(context);
-
-      if (!auth?.userId) {
-        throw new HTTPException(401, {
-          res: context.json({ error: "Unauthorised" }, 401),
-        });
-      }
-
-      // default date range (last 30 days)
-      const defaultTo = new Date();
-      const defaultFrom = subDays(defaultTo, 30);
-
-      // get data, is given, from request
-      const { from, to, accountId } = context.req.valid("query");
-
-      const startDate = from
-        ? parse(from, "yyyy-MM-dd", new Date())
-        : defaultFrom;
-      const endDate = to
-        ? parse(to, "yyyy-MM-dd", new Date())
-        : defaultTo;
-
-      // calculate previous period (same length, before current)
-      const periodLength = differenceInDays(endDate, startDate) +1;
-      const previousStart = subDays(startDate, periodLength);
-      const previousEnd = subDays(endDate, periodLength);
-
-      // fetch all transactions for the date range of this and last period,
-      // do this first so not to have to redo it later down the line.
-      const transactionsData = await db
-        .select({
-          amount: transactions.amount,
-          date: transactions.date,
-        })
-        .from(transactions)
-        .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-        .where(
-          and(
-            accountId ? eq(transactions.accountId, accountId) : undefined,
-            eq(accounts.userId, auth.userId),
-            gte(transactions.date, previousStart), // get both periods at once
-            lte(transactions.date, endDate),
-          )
-        );
-      
-      // iterate over all transaction within a date range and 
-      // return income, expenses and net.
-      const calculateTotal = (rangeStart: Date, rangeEnd: Date) => {
-        const filtered = transactionsData.filter(
-          (t) => t.date >= rangeStart && t.date <= rangeEnd
-        );
-
-        let income = 0;
-        let expenses = 0;
-
-        filtered.forEach((t) => {
-          const amount = convertAmountFromMilliUnits(t.amount);
-
-          if (amount >= 0) {
-            income += amount;
-          } else {
-            expenses += Math.abs(amount);
-          }
-
-        });
-
-        return {
-          income: income,
-          expenses: expenses,
-          net: income-expenses,
-          count: filtered.length,
-        }
-      };
-
-      const currentPeriod = calculateTotal(startDate, endDate);
-      const lastPeriod = calculateTotal(previousStart, previousEnd);
-
-      const changes = {
-        income: currentPeriod.income - lastPeriod.income,
-        incomePercent: calculatePercentChange(currentPeriod.income, lastPeriod.income),
-
-        expenses: currentPeriod.expenses - lastPeriod.expenses,
-        expensesPercent: calculatePercentChange(currentPeriod.expenses, lastPeriod.expenses),
-
-        net: currentPeriod.net - lastPeriod.net,
-        netPercent: calculatePercentChange(currentPeriod.net, lastPeriod.net),
-      }
-
-      return context.json({
-        data: {
-          currentPeriod,
-          lastPeriod,
-          changes,
-          period: {
-            from: startDate,
-            to: endDate,
-          },
-        },
-      });
-    }
-  )
-
-  .get(
-    "/categories",
-    clerkMiddleware(),
-    zValidator(
-      "query",
-      z.object({
-        from: z.string().optional(),
-        to: z.string().optional(),
-        accountId: z.string().optional(),
         type: z.enum(["income", "expense", "all"]).optional().default("all"),
       })
     ),
-
     async (context) => {
       const auth = getAuth(context);
 
@@ -150,7 +37,7 @@ const app = new Hono()
       const defaultTo = new Date();
       const defaultFrom = subDays(defaultTo, 30);
 
-      // get data, is given, from request
+      // get data, if given, from request
       const { from, to, accountId, type } = context.req.valid("query");
 
       const startDate = from
@@ -161,15 +48,15 @@ const app = new Hono()
         : defaultTo;
 
       // calculate previous period (same length, before current)
-      const periodLength = differenceInDays(endDate, startDate) +1;
+      const periodLength = differenceInDays(endDate, startDate) + 1;
       const previousStart = subDays(startDate, periodLength);
       const previousEnd = subDays(endDate, periodLength);
 
-      // fetch all transactions for the date range of this and last period,
-      // do this first so not to have to redo it later down the line.
+      // fetch all transactions for BOTH periods in ONE query
       const transactionsData = await db
         .select({
           amount: transactions.amount,
+          date: transactions.date,
           categoryName: categories.name,
         })
         .from(transactions)
@@ -179,11 +66,13 @@ const app = new Hono()
           and(
             accountId ? eq(transactions.accountId, accountId) : undefined,
             eq(accounts.userId, auth.userId),
-            gte(transactions.date, startDate),
+            gte(transactions.date, previousStart), // get both periods at once
             lte(transactions.date, endDate),
           )
         );
-      
+
+      // ============ HELPER FUNCTIONS ============
+
       // helper to get amount based on type filter
       // e.g., if transaction of +5 but scanning for expenses
       // then just ignore it
@@ -192,74 +81,154 @@ const app = new Hono()
 
         if (type === "income" && value < 0) return null;
         if (type === "expense" && value > 0) return null;
-        
+
         return value;
       };
 
-      // group by their respective categories
-      const groupedCategories: Record<string, { count: number; total: number; transactions: any[] }> = {};
+      // helper: Calculate summary totals for a date range
+      const calculateTotals = (rangeStart: Date, rangeEnd: Date) => {
+        const filtered = transactionsData.filter(
+          (t) => t.date >= rangeStart && t.date <= rangeEnd
+        );
 
-      // iterate through transactions and calculate data
-      // of each category amount total and how many
-      transactionsData.forEach((t) => {
-        const amount = getAmount(t.amount);
+        let income = 0;
+        let expenses = 0;
 
-        if (amount === null) return;
+        filtered.forEach((t) => {
+          const amount = getAmount(t.amount);
+          if (amount === null) return;
 
-        const categoryName = t.categoryName || "Uncategorised";
-
-        if (!groupedCategories[categoryName]) {
-          // if none exist under this category, create empty object
-          groupedCategories[categoryName] = { 
-            count: 0,
-            total: 0,
-            transactions: [],
-          }          
-        }
-
-        groupedCategories[categoryName].count++;
-        groupedCategories[categoryName].total += amount;
-      });
-
-      // calculate totals
-      let totalIncome = 0;
-      let totalExpenses = 0;
-      let totalCount = 0;
-
-      // calculate data now so it can be used in frontend.
-      const categoriesData = Object.entries(groupedCategories).map(([name, data]) => {
-        if (data.total > 0) {
-          totalIncome += data.total;
-        } else {
-          totalExpenses += Math.abs(data.total);
-        }
-        totalCount += data.count;
+          if (amount >= 0) {
+            income += amount;
+          } else {
+            expenses += Math.abs(amount);
+          }
+        });
 
         return {
+          income: income,
+          expenses: expenses,
+          net: income - expenses,
+          count: filtered.length,
+        };
+      };
+
+      // helper: Group categories for a date range
+      const getCategoriesForPeriod = (rangeStart: Date, rangeEnd: Date) => {
+        const filtered = transactionsData.filter(
+          (t) => t.date >= rangeStart && t.date <= rangeEnd
+        );
+
+        const grouped: Record<string, { count: number; total: number }> = {};
+
+        filtered.forEach((t) => {
+          const amount = getAmount(t.amount);
+          if (amount === null) return;
+
+          const categoryName = t.categoryName || "Uncategorised";
+
+          if (!grouped[categoryName]) {
+            grouped[categoryName] = { count: 0, total: 0 };
+          }
+          grouped[categoryName].count++;
+          grouped[categoryName].total += amount;
+        });
+
+        // convert to array with average
+        return Object.entries(grouped).map(([name, data]) => ({
           name,
           count: data.count,
           total: data.total,
           average: data.total / data.count,
-        };
-      });
+        }));
+      };
+
+      // helper: Calculate category totals
+      const calculateCategoryTotals = (categories: any[]) => {
+        let income = 0;
+        let expenses = 0;
+        let count = 0;
+
+        categories.forEach((cat) => {
+          if (cat.total > 0) {
+            income += cat.total;
+          } else {
+            expenses += Math.abs(cat.total);
+          }
+          count += cat.count;
+        });
+
+        return { income, expenses, net: income - expenses, count };
+      };
+
+      // ============ CALCULATE CURRENT PERIOD ============
+
+      // summary totals for current period
+      const currentTotals = calculateTotals(startDate, endDate);
+
+      // categories for current period
+      const currentCategories = getCategoriesForPeriod(startDate, endDate);
+      const currentCategoryTotals = calculateCategoryTotals(currentCategories);
+
+      // ============ CALCULATE LAST PERIOD ============
+
+      // summary totals for last period
+      const lastTotals = calculateTotals(previousStart, previousEnd);
+
+      // categories for last period
+      const lastCategories = getCategoriesForPeriod(previousStart, previousEnd);
+      const lastCategoryTotals = calculateCategoryTotals(lastCategories);
+
+      // ============ CALCULATE CHANGES ============
+
+      // summary changes
+      const summaryChanges = {
+        income: currentTotals.income - lastTotals.income,
+        incomePercent: calculatePercentChange(currentTotals.income, lastTotals.income),
+        expenses: currentTotals.expenses - lastTotals.expenses,
+        expensesPercent: calculatePercentChange(currentTotals.expenses, lastTotals.expenses),
+        net: currentTotals.net - lastTotals.net,
+        netPercent: calculatePercentChange(currentTotals.net, lastTotals.net),
+      };
+
+      // category changes
+      const categoryChanges = {
+        income: currentCategoryTotals.income - lastCategoryTotals.income,
+        incomePercent: calculatePercentChange(currentCategoryTotals.income, lastCategoryTotals.income),
+        expenses: currentCategoryTotals.expenses - lastCategoryTotals.expenses,
+        expensesPercent: calculatePercentChange(currentCategoryTotals.expenses, lastCategoryTotals.expenses),
+        net: currentCategoryTotals.net - lastCategoryTotals.net,
+        netPercent: calculatePercentChange(currentCategoryTotals.net, lastCategoryTotals.net),
+      };
 
       return context.json({
         data: {
-          categoriesData, //unsorted
-          totals: {
-            income: totalIncome,
-            expenses: totalExpenses,
-            net: totalIncome - totalExpenses,
-            count: totalCount,
+          // summary section (income, expenses, net, count)
+          summary: {
+            currentPeriod: currentTotals,
+            lastPeriod: lastTotals,
+            changes: summaryChanges,
           },
+          // categories section
+          categories: {
+            currentPeriod: {
+              categories: currentCategories,
+              totals: currentCategoryTotals,
+            },
+            lastPeriod: {
+              categories: lastCategories,
+              totals: lastCategoryTotals,
+            },
+            changes: categoryChanges,
+          },
+          // period info
           period: {
             from: startDate,
             to: endDate,
           },
         },
       });
-
     }
-  )
+  );
 
 export default app;
