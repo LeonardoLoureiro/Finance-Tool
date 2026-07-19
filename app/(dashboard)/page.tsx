@@ -1,9 +1,9 @@
 "use client";
 
-import { TrendChart } from "@/components/charts/charts";
+import { CategoryPieChart } from "@/components/charts/pie-charts/pie-chart";
+import { TrendChart } from "@/components/charts/trend-charts/trend-chart";
 import { ExpensesCard } from "@/components/expenses-card";
 import { IncomeCard } from "@/components/income-card";
-import { CategoryPieChart } from "@/components/charts/pie-charts";
 import { RemainingCard } from "@/components/remaining-card";
 import { useGetSummary } from "@/features/summary/api/use-get-summary";
 import { useGetTransactions } from "@/features/transactions/api/use-get-transactions";
@@ -18,7 +18,6 @@ export default function Home() {
   const period = summaryData?.data.period;
   const categories = summaryData?.data.categories.currentPeriod.categories;
 
-  // fetch transactions for the trend chart using the date range from summary
   const fromDate = period?.from ? format(new Date(period.from), "yyyy-MM-dd") : undefined;
   const toDate = period?.to ? format(new Date(period.to), "yyyy-MM-dd") : undefined;
 
@@ -51,7 +50,7 @@ export default function Home() {
 
   const categoryData = categories
     ? categories
-        .filter((cat: { total: number }) => cat.total < 0) // only expenses
+        .filter((cat: { total: number }) => cat.total < 0)
         .map((cat: { name: string; total: number }) => ({
           name: cat.name,
           value: Math.abs(cat.total),
@@ -66,7 +65,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center px-6 pt-6">
-      {/* cards grid */}
+      {/* Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 max-w-4xl w-full">
         <RemainingCard
           amount={current?.net || 0}
@@ -75,7 +74,6 @@ export default function Home() {
           isLoading={isLoading}
           variant="default"
         />
-
         <IncomeCard
           amount={current?.income || 0}
           dateRange={dateRange}
@@ -84,7 +82,6 @@ export default function Home() {
           variant="default"
           accentColor="green"
         />
-
         <ExpensesCard
           amount={current?.expenses || 0}
           dateRange={dateRange}
@@ -95,7 +92,7 @@ export default function Home() {
         />
       </div>
 
-      {/* charts */}
+      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-4xl w-full mt-8">
         <div className="lg:col-span-2">
           <TrendChart data={trendData} isLoading={isLoading} />
