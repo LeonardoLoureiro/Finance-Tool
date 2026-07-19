@@ -2,6 +2,15 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -14,6 +23,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+
 import * as React from "react";
 
 import {
@@ -31,7 +41,11 @@ interface DataTableProps<TData, TValue> {
   data: TData[],
   filterKey: string,
   onDelete: (rows: Row<TData>[]) => void,
-  disabled?: boolean, 
+  disabled?: boolean,
+
+  // custom pagination size per user selection
+  pageSizeOptions?: number[];
+  defaultPageSize?: number;
 }
 
 export function DataTable<TData, TValue>({
@@ -40,6 +54,8 @@ export function DataTable<TData, TValue>({
   filterKey,
   onDelete,
   disabled,
+  pageSizeOptions = [10, 20, 30, 50],
+  defaultPageSize = 10,
 }: DataTableProps<TData, TValue>) {
   // sorting data
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -49,6 +65,12 @@ export function DataTable<TData, TValue>({
 
   // selecting row
   const [rowSelection, setRowSelection] = React.useState({})
+
+  // pagination state
+  const [pagination, setPagination] = React.useState({
+    pageIndex: 0,
+    pageSize: defaultPageSize,
+  });
 
   const table = useReactTable({
     data,
@@ -60,10 +82,12 @@ export function DataTable<TData, TValue>({
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     onRowSelectionChange: setRowSelection,
+    onPaginationChange: setPagination,
     state: {
       sorting,
       columnFilters,
       rowSelection,
+      pagination,
     },
   })
 
@@ -88,7 +112,7 @@ export function DataTable<TData, TValue>({
             className="ml-auto font-normal text-xs"
             onClick={() => {
               onDelete(table.getFilteredSelectedRowModel().rows)
-              table.reset
+              table.resetRowSelection()
             }}
             >
               <Trash />
@@ -140,29 +164,60 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-        <div className="flex items-center justify-end space-x-2 py-4">
+        <div className="flex items-center justify-between space-x-2 py-4">
           {/* Show many rows are selected */}
-          <div className="flex-1 text-sm text-muted-foreground">
+          <div className="text-sm text-muted-foreground">
             {table.getFilteredSelectedRowModel().rows.length} of{" "}
             {table.getFilteredRowModel().rows.length} row(s) selected.
           </div>
-          {/* Pagination: which 'page' table is in depending on how many rows there are */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
+          
+          <div className="flex items-center gap-6">
+            {/* table size dropdown */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Rows per page:</span>
+              <Select
+                value={pagination.pageSize.toString()}
+                onValueChange={(value) => {
+                  table.setPageSize(Number(value));
+                }}
+              >
+                <SelectTrigger className="h-8 w-17.5">
+                  <SelectValue placeholder={pagination.pageSize} />
+                </SelectTrigger>
+                <SelectContent>
+                  {pageSizeOptions.map((size) => (
+                    <SelectItem key={size} value={size.toString()}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* pagination controls */}
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+              >
+                Previous
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Page {table.getState().pagination.pageIndex + 1} of{" "}
+                {table.getPageCount()}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
       </div>
     </>
   )
