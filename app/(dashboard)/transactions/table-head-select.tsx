@@ -14,9 +14,9 @@ const options = [
   "amount",
   "payee",
   "date",
+  "account",
 
   // optional
-  "account",
   "category",
   "notes",
 ];
