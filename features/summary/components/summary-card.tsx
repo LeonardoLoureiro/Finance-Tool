@@ -84,7 +84,10 @@ export const SummaryCard = ({
 
   if (isLoading) {
     return (
-      <Card className={cn(cardVariants({ variant, size, rounded }), "aspect-square")}>
+      <Card className={cn(
+        cardVariants({ variant, size, rounded }),
+        "aspect-square w-full max-w-[280px] sm:max-w-none mx-auto"
+      )}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-4 px-4">
           <Skeleton className="h-4 w-20" />
           <Skeleton className="h-5 w-5" />
@@ -98,7 +101,10 @@ export const SummaryCard = ({
   }
 
   return (
-    <Card className={cn(cardVariants({ variant, size, rounded }), "aspect-square")}>
+    <Card className={cn(
+      cardVariants({ variant, size, rounded }),
+      "aspect-square w-full max-w-[280px] sm:max-w-none mx-auto"
+    )}>
       {/* accent line */}
       {accent && (
         <div
@@ -130,16 +136,16 @@ export const SummaryCard = ({
       </CardHeader>
 
       <CardContent className="flex-1 flex flex-col justify-center px-4 pb-4">
-        <div className={cn("text-3xl font-bold tracking-tight", valueClassName)}>
+        <div className={cn("text-2xl sm:text-3xl font-bold tracking-tight", valueClassName)}>
           {formatCurrency(value)}
         </div>
 
         {subtitle && (
-          <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+          <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">{subtitle}</p>
         )}
 
         {trend && (
-          <div className="flex items-center gap-1.5 text-xs mt-3 pt-2 border-t border-muted/50">
+          <div className="flex items-center gap-1.5 text-[10px] sm:text-xs mt-3 pt-2 border-t border-muted/50">
             <span className="text-muted-foreground">{trend.label}:</span>
             <span
               className={cn(
