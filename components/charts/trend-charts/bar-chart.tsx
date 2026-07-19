@@ -4,6 +4,7 @@ import { Bar, BarChart, CartesianGrid, Legend, Tooltip, XAxis, YAxis } from "rec
 import { COLORS } from "./constants";
 import { TrendData } from "./types";
 import { format } from "date-fns";
+import { formatCurrency } from "@/lib/utils";
 
 type BarChartComponentProps = {
   data: TrendData[];
@@ -45,11 +46,26 @@ export const BarChartComponent = ({ data }: BarChartComponentProps) => {
         tickFormatter={(value) => `£${value}`}
       />
       <Tooltip
+        formatter={(value) => {
+          const numericValue = typeof value === "number" ? value : Number(value ?? 0);
+          return [formatCurrency(Math.abs(numericValue)), ""];
+        }}
         labelFormatter={(label) => `Date: ${label}`}
         contentStyle={{
           backgroundColor: "hsl(var(--background))",
           borderColor: "hsl(var(--border))",
           borderRadius: "8px",
+          padding: "8px 12px",
+        }}
+        labelStyle={{
+          color: "hsl(var(--foreground))",
+          fontWeight: 600,
+          fontSize: "13px",
+          marginBottom: "4px",
+        }}
+        itemStyle={{
+          color: "hsl(var(--muted-foreground))",
+          fontSize: "12px",
         }}
       />
       <Legend />

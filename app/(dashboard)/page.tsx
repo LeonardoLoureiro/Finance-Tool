@@ -1,7 +1,7 @@
 "use client";
 
 import { CategoryPieChart } from "@/components/charts/pie-charts";
-import { TrendChart } from "@/components/charts/trend-charts/trend-chart";
+import { TrendChart } from "@/components/charts/trend-charts";
 import { ExpensesCard } from "@/components/expenses-card";
 import { IncomeCard } from "@/components/income-card";
 import { RemainingCard } from "@/components/remaining-card";

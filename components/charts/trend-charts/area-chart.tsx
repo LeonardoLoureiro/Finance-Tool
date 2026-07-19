@@ -4,6 +4,7 @@ import { Area, AreaChart, CartesianGrid, Legend, Tooltip, XAxis, YAxis } from "r
 import { COLORS } from "./constants";
 import { TrendData } from "./types";
 import { format } from "date-fns";
+import { formatCurrency } from "@/lib/utils";
 
 type AreaChartProps = {
   data: TrendData[];
@@ -55,11 +56,32 @@ export const AreaChartComponent = ({ data }: AreaChartProps) => {
         tickFormatter={(value) => `£${value}`}
       />
       <Tooltip
+        formatter={(value) => {
+          const numericValue = typeof value === "number" ? value : Number(value ?? 0);
+          return [formatCurrency(Math.abs(numericValue)), ""];
+        }}
         labelFormatter={(label) => `Date: ${label}`}
         contentStyle={{
           backgroundColor: "hsl(var(--background))",
           borderColor: "hsl(var(--border))",
           borderRadius: "8px",
+          opacity: 0.95,
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+          padding: "8px 12px",
+        }}
+        wrapperStyle={{
+          outline: "none",
+        }}
+        labelStyle={{
+          color: "hsl(var(--foreground))",
+          fontWeight: 600,
+          fontSize: "13px",
+          marginBottom: "4px",
+        }}
+        itemStyle={{
+          color: "hsl(var(--muted-foreground))",
+          fontSize: "12px",
+          paddingTop: "2px",
         }}
       />
       <Legend />
