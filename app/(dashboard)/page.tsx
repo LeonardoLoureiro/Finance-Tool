@@ -1,38 +1,58 @@
 "use client";
 
-import { TrendChart } from "@/components/charts";
+import { TrendChart } from "@/components/charts/charts";
 import { ExpensesCard } from "@/components/expenses-card";
 import { IncomeCard } from "@/components/income-card";
-import { CategoryPieChart } from "@/components/pie-charts";
+import { CategoryPieChart } from "@/components/charts/pie-charts";
 import { RemainingCard } from "@/components/remaining-card";
 import { useGetSummary } from "@/features/summary/api/use-get-summary";
+import { useGetTransactions } from "@/features/transactions/api/use-get-transactions";
+import { convertAmountFromMilliUnits } from "@/lib/utils";
 import { format } from "date-fns";
 
 export default function Home() {
-  const { data, isLoading } = useGetSummary({ type: "all" });
+  const { data: summaryData, isLoading: isSummaryLoading } = useGetSummary({ type: "all" });
 
-  const current = data?.data.summary.currentPeriod;
-  const changes = data?.data.summary.changes;
-  const period = data?.data.period;
+  const current = summaryData?.data.summary.currentPeriod;
+  const changes = summaryData?.data.summary.changes;
+  const period = summaryData?.data.period;
+  const categories = summaryData?.data.categories.currentPeriod.categories;
 
-  const categories = data?.data.categories.currentPeriod.categories;
+  // fetch transactions for the trend chart using the date range from summary
+  const fromDate = period?.from ? format(new Date(period.from), "yyyy-MM-dd") : undefined;
+  const toDate = period?.to ? format(new Date(period.to), "yyyy-MM-dd") : undefined;
 
+  const { data: transactions, isLoading: isTransactionsLoading } = useGetTransactions({
+    from: fromDate,
+    to: toDate,
+  });
 
-  //mockdata for now
-  const trendData = [
-    { date: "2026-07-13", income: 0, expenses: 45 },
-    { date: "2026-07-14", income: 0, expenses: 89 },
-    { date: "2026-07-15", income: 2500, expenses: 155 },
-    { date: "2026-07-16", income: 0, expenses: 140 },
-    { date: "2026-07-17", income: 0, expenses: 195 },
-    { date: "2026-07-18", income: 0, expenses: 52 },
-    { date: "2026-07-19", income: 0, expenses: 35 },
-  ];
-  
+  // organise data for chart now
+  const trendData = (transactions || []).reduce((acc: any[], transaction: any) => {
+    const date = format(new Date(transaction.date), "yyyy-MM-dd");
+    const existing = acc.find((item) => item.date === date);
+    const amount = convertAmountFromMilliUnits(transaction.amount);
+
+    if (existing) {
+      if (amount > 0) {
+        existing.income += amount;
+      } else {
+        existing.expenses += Math.abs(amount);
+      }
+    } else {
+      acc.push({
+        date,
+        income: amount > 0 ? amount : 0,
+        expenses: amount < 0 ? Math.abs(amount) : 0,
+      });
+    }
+    return acc;
+  }, []);
+
   const categoryData = categories
     ? categories
-        .filter((cat) => cat.total < 0) // Only expenses
-        .map((cat) => ({
+        .filter((cat: { total: number }) => cat.total < 0) // only expenses
+        .map((cat: { name: string; total: number }) => ({
           name: cat.name,
           value: Math.abs(cat.total),
         }))
@@ -41,6 +61,8 @@ export default function Home() {
   const dateRange = period
     ? `${format(new Date(period.from), "MMM d")} - ${format(new Date(period.to), "MMM d, yyyy")}`
     : "";
+
+  const isLoading = isSummaryLoading || isTransactionsLoading;
 
   return (
     <div className="flex flex-col items-center px-6 pt-6">
@@ -53,7 +75,7 @@ export default function Home() {
           isLoading={isLoading}
           variant="default"
         />
-        
+
         <IncomeCard
           amount={current?.income || 0}
           dateRange={dateRange}
@@ -62,7 +84,7 @@ export default function Home() {
           variant="default"
           accentColor="green"
         />
-        
+
         <ExpensesCard
           amount={current?.expenses || 0}
           dateRange={dateRange}
