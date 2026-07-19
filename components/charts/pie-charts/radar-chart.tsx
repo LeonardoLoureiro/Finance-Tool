@@ -40,7 +40,6 @@ export const RadarChartComponent = ({ data }: RadarChartComponentProps) => {
             fontSize: 10, 
             fontWeight: 500 
           }}
-          // Add padding to prevent text cutoff
           tickLine={false}
           axisLine={false}
         />
@@ -48,15 +47,28 @@ export const RadarChartComponent = ({ data }: RadarChartComponentProps) => {
           tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 9 }}
           tickFormatter={(value) => `£${value}`}
           axisLine={{ stroke: "hsl(var(--foreground))", strokeWidth: 1, opacity: 0.3 }}
-          // Reduce radius axis tick count to prevent overcrowding
           tickCount={4}
         />
         <Tooltip
-          formatter={(value) => [formatCurrency(Math.abs(Number(value ?? 0))), ""]}
+          formatter={(value) => {
+            const numericValue = typeof value === "number" ? value : Number(value ?? 0);
+            return [formatCurrency(Math.abs(numericValue)), ""];
+          }}
           contentStyle={{
             backgroundColor: "hsl(var(--background))",
             borderColor: "hsl(var(--border))",
             borderRadius: "8px",
+            padding: "8px 12px",
+          }}
+          labelStyle={{
+            color: "hsl(var(--foreground))",
+            fontWeight: 600,
+            fontSize: "13px",
+            marginBottom: "4px",
+          }}
+          itemStyle={{
+            color: "hsl(var(--muted-foreground))",
+            fontSize: "12px",
           }}
         />
         <Radar
