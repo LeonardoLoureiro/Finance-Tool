@@ -4,6 +4,7 @@ import { Pie, PieChart, ResponsiveContainer, Tooltip, Cell, Legend } from "recha
 import { COLORS } from "./constants";
 import { CategoryData } from "./types";
 import { formatCurrency } from "@/lib/utils";
+import { CustomTooltip } from "../custom-tooltip";
 
 type PieChartComponentProps = {
   data: CategoryData[];
@@ -29,28 +30,7 @@ export const PieChartComponent = ({ data }: PieChartComponentProps) => {
             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
           ))}
         </Pie>
-        <Tooltip
-          formatter={(value) => {
-            const numericValue = typeof value === "number" ? value : Number(value ?? 0);
-            return [formatCurrency(Math.abs(numericValue)), ""];
-          }}
-          contentStyle={{
-            backgroundColor: "hsl(var(--background))",
-            borderColor: "hsl(var(--border))",
-            borderRadius: "8px",
-            padding: "8px 12px",
-          }}
-          labelStyle={{
-            color: "hsl(var(--foreground))",
-            fontWeight: 600,
-            fontSize: "13px",
-            marginBottom: "4px",
-          }}
-          itemStyle={{
-            color: "hsl(var(--muted-foreground))",
-            fontSize: "12px",
-          }}
-        />
+        <Tooltip content={<CustomTooltip labelKey="Category" />} />
         <Legend
           iconSize={10}
           layout="horizontal"

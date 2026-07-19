@@ -10,6 +10,7 @@ import {
 import { COLORS } from "./constants";
 import { CategoryData } from "./types";
 import { formatCurrency } from "@/lib/utils";
+import { CustomTooltip } from "../custom-tooltip";
 
 type RadialChartComponentProps = {
   data: CategoryData[];
@@ -41,28 +42,7 @@ export const RadialChartComponent = ({ data }: RadialChartComponentProps) => {
         startAngle={90}
         endAngle={-270}
       >
-        <Tooltip
-          formatter={(value) => {
-            const numericValue = typeof value === "number" ? value : Number(value ?? 0);
-            return [formatCurrency(Math.abs(numericValue)), ""];
-          }}
-          contentStyle={{
-            backgroundColor: "hsl(var(--background))",
-            borderColor: "hsl(var(--border))",
-            borderRadius: "8px",
-            padding: "8px 12px",
-          }}
-          labelStyle={{
-            color: "hsl(var(--foreground))",
-            fontWeight: 600,
-            fontSize: "13px",
-            marginBottom: "4px",
-          }}
-          itemStyle={{
-            color: "hsl(var(--muted-foreground))",
-            fontSize: "12px",
-          }}
-        />
+        <Tooltip content={<CustomTooltip labelKey="Category" />} />
         <RadialBar
           label={renderLabel}
           background
