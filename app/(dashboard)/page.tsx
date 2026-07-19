@@ -1,6 +1,6 @@
 "use client";
 
-import { CategoryPieChart } from "@/components/charts/pie-charts/pie-chart";
+import { CategoryPieChart } from "@/components/charts/pie-charts";
 import { TrendChart } from "@/components/charts/trend-charts/trend-chart";
 import { ExpensesCard } from "@/components/expenses-card";
 import { IncomeCard } from "@/components/income-card";
@@ -98,7 +98,11 @@ export default function Home() {
           <TrendChart data={trendData} isLoading={isLoading} />
         </div>
         <div className="lg:col-span-1">
-          <CategoryPieChart data={categoryData} isLoading={isLoading} />
+          <CategoryPieChart 
+            data={categoryData} 
+            isLoading={isLoading}
+            defaultChartType="pie"
+          />
         </div>
       </div>
     </div>
