@@ -1,9 +1,10 @@
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
 import { handle } from "hono/vercel";
 import accounts from "./accounts";
 import categories from "./categories";
+import summary from "./summary";
 import transactions from "./transactions";
-import { HTTPException } from "hono/http-exception";
 
 
 export const runtime = "edge";
@@ -20,6 +21,7 @@ app.onError((error, context) => {
 });
 
 const routes = app
+  .route("/summary", summary)
   .route("/accounts", accounts)
   .route("/categories", categories)
   .route("/transactions", transactions);
