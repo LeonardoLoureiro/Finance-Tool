@@ -4,11 +4,9 @@ import { useGetSummary } from "@/features/summary/api/use-get-summary";
 import { ExpensesCard } from "@/features/summary/components/expenses-card";
 import { IncomeCard } from "@/features/summary/components/income-card";
 import { RemainingCard } from "@/features/summary/components/remaining-card";
-import { useUser } from "@clerk/nextjs";
 import { format } from "date-fns";
 
 export default function Home() {
-  const { user } = useUser();
   const { data, isLoading } = useGetSummary({ type: "all" });
 
   const current = data?.data.summary.currentPeriod;
@@ -20,17 +18,9 @@ export default function Home() {
     : "";
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-3xl font-bold">
-          Welcome back, {user?.firstName || "there"}! 👋
-        </h1>
-        <p className="text-muted-foreground">
-          This is your financial board
-        </p>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-3">
+    <div className="flex flex-col items-center px-6 pt-6">
+      {/* cards grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl w-full">
         <RemainingCard
           amount={current?.net || 0}
           dateRange={dateRange}

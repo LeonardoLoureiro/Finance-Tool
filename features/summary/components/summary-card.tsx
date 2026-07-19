@@ -33,38 +33,38 @@ export const SummaryCard = ({
 }: SummaryCardProps) => {
   if (isLoading) {
     return (
-      <Card>
+      <Card className="aspect-square">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <Skeleton className="h-4 w-20" />
           <Skeleton className="h-4 w-4" />
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col justify-center h-[calc(100%-60px)]">
           <Skeleton className="h-8 w-24" />
-          <Skeleton className="h-3 w-16 mt-1" />
+          <Skeleton className="h-3 w-16 mt-2" />
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="relative overflow-hidden">
+    <Card className="relative overflow-hidden aspect-square flex flex-col">
       {/* subtle gradient accent line */}
       <div
         className={cn(
           "absolute top-0 left-0 h-1 w-full",
-          trend ? (trend.isPositive ? "bg-green-500" : "bg-red-500") : value >= 0 ? "bg-green-500" : "bg-red-500"
+          value >= 0 ? "bg-green-500" : "bg-red-500"
         )}
       />
 
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 flex-shrink-0">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
         </CardTitle>
-        <div className="rounded-md bg-muted p-1.5">{icon}</div>
+        <div className="rounded-md bg-muted p-2">{icon}</div>
       </CardHeader>
 
-      <CardContent>
-        <div className={cn("text-2xl font-bold tracking-tight", valueClassName)}>
+      <CardContent className="flex-1 flex flex-col justify-center">
+        <div className={cn("text-3xl font-bold tracking-tight", valueClassName)}>
           {formatCurrency(value)}
         </div>
 
@@ -73,7 +73,7 @@ export const SummaryCard = ({
         )}
 
         {trend && (
-          <div className="flex items-center gap-1.5 text-xs mt-2 border-t border-muted/50 pt-2">
+          <div className="flex items-center gap-1.5 text-xs mt-3 border-t border-muted/50 pt-2">
             <span className="text-muted-foreground">{trend.label}:</span>
             <span
               className={cn(

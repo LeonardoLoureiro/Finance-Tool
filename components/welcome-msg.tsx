@@ -1,4 +1,6 @@
-"user client";
+// components/welcome-msg.tsx
+
+"use client";
 
 import { useUser } from "@clerk/nextjs";
 
@@ -6,14 +8,14 @@ export const WelcomeMsg = () => {
   const { user, isLoaded } = useUser();
 
   return (
-    <div>
-      <h2>
-        Welcome Back { isLoaded ? user?.firstName : "" }👋
+    <div className="space-y-1">
+      <h2 className="text-2xl font-semibold tracking-tight">
+        Welcome Back{isLoaded ? `, ${user?.firstName}` : ""}! 👋
       </h2>
 
-      <p>
-        This is your Financial Overview Board.
+      <p className="text-sm text-muted-foreground">
+        Here's your financial overview
       </p>
     </div>
-  )
-}
+  );
+};

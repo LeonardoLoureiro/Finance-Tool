@@ -1,6 +1,6 @@
 "use client";
 
-import { Wallet } from "lucide-react";
+import { PiggyBank } from "lucide-react";
 import { SummaryCard } from "./summary-card";
 
 type RemainingCardProps = {
@@ -24,7 +24,7 @@ export const RemainingCard = ({
   return (
     <SummaryCard
       title="Remaining"
-      icon={<Wallet className="h-5 w-5 text-muted-foreground" />}
+      icon={<PiggyBank className="h-5 w-5 text-blue-500" />}
       value={amount}
       valueClassName={isPositive ? "text-green-600" : "text-red-600"}
       subtitle={dateRange}
