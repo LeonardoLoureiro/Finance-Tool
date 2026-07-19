@@ -7,15 +7,15 @@ import {
 } from "@/components/ui/sheet";
 
 import { insertAccountsSchema } from "@/db/schema";
+import { useDeleteAccount } from "@/features/accounts/api/use-delete-account";
 import { useEditAccount } from "@/features/accounts/api/use-edit-accounts";
 import { useGetAccount } from "@/features/accounts/api/use-get-account";
 import { AccountForm } from "@/features/accounts/components/account-form";
 import { useOpenAccount } from "@/features/accounts/hooks/use-open-account";
+import { useConfirm } from "@/hooks/use-confirm";
 import { Loader2 } from "lucide-react";
 import { useMemo } from "react";
 import { z } from "zod";
-import { useDeleteAccount } from "@/features/accounts/api/use-delete-account";
-import { useConfirm } from "@/hooks/use-confirm";
 
 // just use the name, since we're only adding an account name.
 const formSchema = insertAccountsSchema.pick({
@@ -34,7 +34,7 @@ export const EditAccountSheet = () => {
 
   // while account info is fetched, show form as loading
   const isLoading = accountQuery.isLoading;
-
+  
   const onSubmit = (values: FormValues) => {
     // send values to db, already checked types match
     editMutation.mutate(values, {

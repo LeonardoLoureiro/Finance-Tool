@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBulkDeleteCategories } from "@/features/categories/api/use-bulk-delete";
-import { useGetCategories } from "@/features/categories/api/user-get-categories";
+import { useGetCategories } from "@/features/categories/api/use-get-categories";
 import { useNewCategory } from "@/features/categories/hooks/use-new-categories";
 import { useConfirm } from "@/hooks/use-confirm";
 import { Loader2, Plus } from "lucide-react";

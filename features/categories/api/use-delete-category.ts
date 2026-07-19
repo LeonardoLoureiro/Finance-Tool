@@ -5,17 +5,17 @@ import { client } from "@/lib/hono";
 import { toast } from "sonner";
 
 type ResponseType = InferResponseType<
-  typeof client.api.accounts[":id"]["$delete"]
+  typeof client.api.categories[":id"]["$delete"]
 >;
 
-export const useDeleteAccount = (id?: string) => {
+export const useDeleteCategory = (id?: string) => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation<ResponseType, Error>({
     mutationFn: async () => {
       if (!id) throw new Error("Missing id");
 
-      const response = await client.api.accounts[":id"]["$delete"]({
+      const response = await client.api.categories[":id"]["$delete"]({
         param: { id },
       });
 
@@ -23,23 +23,23 @@ export const useDeleteAccount = (id?: string) => {
     },
 
     onSuccess: () => {
-      toast.success("Account deleted");
+      toast.success("Category deleted");
 
       queryClient.invalidateQueries({
-        queryKey: ["accounts"],
+        queryKey: ["categories"],
       });
-
+      
       queryClient.invalidateQueries({
         queryKey: ["transactions"],
       });
 
       queryClient.removeQueries({
-        queryKey: ["account", { id }],
+        queryKey: ["category", { id }],
       });
     },
 
     onError: () => {
-      toast.error("Failed to delete account");
+      toast.error("Failed to delete category");
     },
   });
 
