@@ -7,6 +7,7 @@ import { formatCurrency } from "@/lib/utils";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { ReactNode } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
+import { AnimatedNumber } from "./animated-numbers";
 
 const cardVariants = cva(
   "relative overflow-hidden flex flex-col",
@@ -57,6 +58,9 @@ type SummaryCardProps = {
   isLoading?: boolean;
   accent?: boolean;
   accentColor?: "green" | "red" | "blue" | "yellow" | "purple";
+  animate?: boolean;
+  animationDuration?: number;
+  animationDelay?: number;
 } & VariantProps<typeof cardVariants>;
 
 export const SummaryCard = ({
@@ -72,6 +76,9 @@ export const SummaryCard = ({
   rounded = "default",
   accent = true,
   accentColor = value >= 0 ? "green" : "red",
+  animate = true,
+  animationDuration = 800,
+  animationDelay = 200,
 }: SummaryCardProps) => {
   // Accent color mapping
   const accentColors = {
@@ -136,9 +143,20 @@ export const SummaryCard = ({
       </CardHeader>
 
       <CardContent className="flex-1 flex flex-col justify-center px-4 pb-4">
-        <div className={cn("text-2xl sm:text-3xl font-bold tracking-tight", valueClassName)}>
-          {formatCurrency(value)}
-        </div>
+        {/* Animated Main Value */}
+        {animate ? (
+          <AnimatedNumber
+            value={value}
+            className={cn("text-2xl sm:text-3xl font-bold tracking-tight", valueClassName)}
+            format="currency"
+            duration={animationDuration}
+            delay={animationDelay}
+          />
+        ) : (
+          <div className={cn("text-2xl sm:text-3xl font-bold tracking-tight", valueClassName)}>
+            {formatCurrency(value)}
+          </div>
+        )}
 
         {subtitle && (
           <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">{subtitle}</p>
@@ -158,7 +176,14 @@ export const SummaryCard = ({
               ) : (
                 <ArrowDown className="h-3 w-3" />
               )}
-              {Math.abs(trend.percent).toFixed(1)}%
+              {/* Animated Percentage */}
+              <AnimatedNumber
+                value={Math.abs(trend.percent)}
+                format="percentage"
+                decimals={1}
+                duration={animationDuration}
+                delay={animationDelay + 300}
+              />
             </span>
           </div>
         )}
