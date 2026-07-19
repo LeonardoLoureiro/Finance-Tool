@@ -11,6 +11,8 @@ type IncomeCardProps = {
     percent: number;
   };
   isLoading?: boolean;
+  variant?: "default" | "success" | "warning" | "destructive" | "outline" | "ghost" | "secondary";
+  accentColor?: "green" | "red" | "blue" | "yellow" | "purple";
 };
 
 export const IncomeCard = ({
@@ -18,6 +20,8 @@ export const IncomeCard = ({
   dateRange,
   change,
   isLoading = false,
+  variant = "default",
+  accentColor = "green",
 }: IncomeCardProps) => {
   return (
     <SummaryCard
@@ -26,6 +30,8 @@ export const IncomeCard = ({
       value={amount}
       valueClassName="text-green-600"
       subtitle={dateRange}
+      variant={variant}
+      accentColor={accentColor}
       trend={
         change
           ? {

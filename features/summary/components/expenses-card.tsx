@@ -11,6 +11,8 @@ type ExpensesCardProps = {
     percent: number;
   };
   isLoading?: boolean;
+  variant?: "default" | "success" | "warning" | "destructive" | "outline" | "ghost" | "secondary";
+  accentColor?: "green" | "red" | "blue" | "yellow" | "purple";
 };
 
 export const ExpensesCard = ({
@@ -18,6 +20,8 @@ export const ExpensesCard = ({
   dateRange,
   change,
   isLoading = false,
+  variant = "default",
+  accentColor = "red",
 }: ExpensesCardProps) => {
   // for expenses, a negative change is good (spent less)
   const isPositive = change ? change.amount <= 0 : true;
@@ -29,6 +33,8 @@ export const ExpensesCard = ({
       value={amount}
       valueClassName="text-red-600"
       subtitle={dateRange}
+      variant={variant}
+      accentColor={accentColor}
       trend={
         change
           ? {
