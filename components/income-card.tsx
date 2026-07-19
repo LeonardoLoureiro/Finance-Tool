@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowUpRight } from "lucide-react";
-import { SummaryCard } from "./data-card";
+import { SummaryCard } from "./ui/data-card";
 
 type IncomeCardProps = {
   amount: number;

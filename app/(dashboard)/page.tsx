@@ -1,9 +1,9 @@
 "use client";
 
 import { useGetSummary } from "@/features/summary/api/use-get-summary";
-import { ExpensesCard } from "@/features/summary/components/expenses-card";
-import { IncomeCard } from "@/features/summary/components/income-card";
-import { RemainingCard } from "@/features/summary/components/remaining-card";
+import { ExpensesCard } from "@/components/expenses-card";
+import { IncomeCard } from "@/components/income-card";
+import { RemainingCard } from "@/components/remaining-card";
 import { format } from "date-fns";
 
 export default function Home() {
