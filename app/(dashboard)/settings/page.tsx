@@ -28,7 +28,7 @@ import { toast } from "sonner";
 
 export default function SettingsPage() {
   const { user, isLoaded, isSignedIn } = useUser();
-  const { signOut } = useClerk();
+  const { signOut, openUserProfile } = useClerk();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [firstName, setFirstName] = useState("");
@@ -105,6 +105,10 @@ export default function SettingsPage() {
     return null;
   }
 
+  const handleManageAccount = () => {
+    openUserProfile();
+  };
+
   return (
     <div className="container mx-auto max-w-4xl px-4 py-6 sm:px-6">
       <div className="mb-8">
@@ -160,7 +164,7 @@ export default function SettingsPage() {
                     Your profile photo, email and security settings are managed by Clerk.
                   </p>
 
-                  <Button variant="outline">
+                  <Button variant="outline" onClick={handleManageAccount}>
                     <Shield className="mr-2 h-4 w-4" />
                     Manage Account
                   </Button>
