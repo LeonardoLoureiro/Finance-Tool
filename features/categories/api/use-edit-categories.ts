@@ -30,6 +30,7 @@ export const useEditCategory = (id?: string) => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["summary"] });
+      queryClient.invalidateQueries({ queryKey: ["daily"] });
       queryClient.invalidateQueries({ queryKey: ["categories", { id }] });
 
     },
