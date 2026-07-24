@@ -20,23 +20,26 @@ import { useGetDailyTransactions } from "@/features/transactions/api/use-get-dai
 import { endOfDay, format, startOfDay, subDays } from "date-fns";
 import { RefreshCw } from "lucide-react";
 import { useState } from "react";
-
-type DateRange = {
-  from: Date | undefined;
-  to: Date | undefined;
-};
+import { DateRange } from "react-day-picker";
 
 export default function Home() {
   // State for filters - store the ID as a string
   const [selectedAccountId, setSelectedAccountId] = useState<string>("all");
-  const [dateRange, setDateRange] = useState<DateRange>({
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+
+  const effectiveRange = dateRange ?? {
     from: subDays(new Date(), 30),
     to: new Date(),
-  });
+  };
 
-  // Calculate date range
-  const fromDate = dateRange.from ? format(startOfDay(dateRange.from), "yyyy-MM-dd") : undefined;
-  const toDate = dateRange.to ? format(endOfDay(dateRange.to), "yyyy-MM-dd") : undefined;
+  // calculate date range
+  const fromDate = effectiveRange.from
+    ? format(startOfDay(effectiveRange.from), "yyyy-MM-dd")
+    : undefined;
+
+  const toDate = effectiveRange.to
+    ? format(endOfDay(effectiveRange.to), "yyyy-MM-dd")
+    : undefined;
 
   // Fetch accounts for dropdown
   const { data: accountsData, isLoading: isAccountsLoading } = useGetAccounts();
@@ -79,19 +82,20 @@ export default function Home() {
         }))
     : [];
 
-  const dateRangeDisplay = dateRange.from && dateRange.to
-    ? `${format(dateRange.from, "MMM d")} - ${format(dateRange.to, "MMM d, yyyy")}`
-    : "";
+  const dateRangeDisplay =
+    effectiveRange.from && effectiveRange.to
+      ? `${format(effectiveRange.from, "MMM d")} - ${format(
+          effectiveRange.to,
+          "MMM d, yyyy"
+        )}`
+      : "";
 
   const isLoading = isSummaryLoading || isDailyLoading || isAccountsLoading;
 
   // Reset filters
   const handleReset = () => {
     setSelectedAccountId("all");
-    setDateRange({
-      from: subDays(new Date(), 30),
-      to: new Date(),
-    });
+    setDateRange(undefined);
   };
 
   // Helper function to get account name from ID
@@ -101,12 +105,17 @@ export default function Home() {
     return account?.name || accountId; // Fallback to ID if name not found
   };
 
+  // handle select change - convert null to "all"
+  const handleAccountChange = (value: string | null) => {
+    setSelectedAccountId(value || "all");
+  };
+
   return (
     <div className="flex flex-col items-center px-6 pt-6">
       {/* filters */}
       <div className="flex flex-wrap items-center gap-3 w-full max-w-4xl mb-6">
         {/* account filter */}
-        <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
+        <Select value={selectedAccountId} onValueChange={handleAccountChange}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="All Accounts">
               {getAccountName(selectedAccountId)}

@@ -1,22 +1,27 @@
 import { useQuery } from "@tanstack/react-query";
 import { client } from "@/lib/hono";
-import { useSearchParams } from "next/navigation";
 
-export const useGetTransactions = (p0?: { from: string | undefined; to: string | undefined; }) => {
-  const searchParams = useSearchParams();
-  const from = searchParams.get("from") || "";
-  const to = searchParams.get("to") || "";
-  const accountId = searchParams.get("accountId") || "";
+type Params = {
+  from?: string;
+  to?: string;
+  accountId?: string;
+};
 
-  const query = useQuery({
+export const useGetTransactions = ({
+  from = "",
+  to = "",
+  accountId = "",
+}: Params = {}) => {
+  return useQuery({
     queryKey: ["transactions", { from, to, accountId }],
+
     queryFn: async () => {
       const res = await client.api.transactions.$get({
         query: {
           from,
           to,
-          accountId
-        }
+          accountId,
+        },
       });
 
       if (!res.ok) {
@@ -28,6 +33,4 @@ export const useGetTransactions = (p0?: { from: string | undefined; to: string |
       return data;
     },
   });
-
-  return query;
 };
