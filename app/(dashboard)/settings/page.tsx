@@ -10,18 +10,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useClerk, useUser } from "@clerk/nextjs";
 import {
   AlertTriangle,
-  ArrowRight,
   Bell,
+  Camera,
   Loader2,
   LogOut,
+  Pencil,
   Settings as SettingsIcon,
   Shield,
-  Tag,
   Trash2,
-  User,
-  Wallet
+  User
 } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -92,6 +90,10 @@ export default function SettingsPage() {
     }
   };
 
+  const handleManageAccount = () => {
+    openUserProfile();
+  };
+
   if (!isLoaded) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -104,10 +106,6 @@ export default function SettingsPage() {
     router.push("/sign-in");
     return null;
   }
-
-  const handleManageAccount = () => {
-    openUserProfile();
-  };
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-6 sm:px-6">
@@ -150,21 +148,30 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Avatar with click to change */}
               <div className="flex flex-col items-center gap-6 text-center sm:flex-row sm:items-start sm:text-left">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage src={user?.imageUrl} />
-                  <AvatarFallback>
-                    {firstName?.[0]}{lastName?.[0]}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="relative group cursor-pointer" onClick={handleManageAccount}>
+                  <Avatar className="h-20 w-20 ring-2 ring-transparent group-hover:ring-primary transition-all duration-200">
+                    <AvatarImage src={user?.imageUrl} />
+                    <AvatarFallback className="text-2xl">
+                      {firstName?.[0]}{lastName?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  {/* Hover overlay with camera icon */}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <Camera className="h-8 w-8 text-white" />
+                  </div>
+                  {/* Small pencil badge */}
+                  <div className="absolute -bottom-1 -right-1 bg-primary rounded-full p-1.5 border-2 border-background">
+                    <Pencil className="h-3 w-3 text-primary-foreground" />
+                  </div>
+                </div>
                 <div className="space-y-1">
-                  <p className="text-sm font-medium">Account</p>
-
+                  <p className="text-sm font-medium">Profile Photo</p>
                   <p className="text-sm text-muted-foreground">
-                    Your profile photo, email and security settings are managed by Clerk.
+                    Click the avatar to change your profile photo
                   </p>
-
-                  <Button variant="outline" onClick={handleManageAccount}>
+                  <Button variant="outline" onClick={handleManageAccount} size="sm">
                     <Shield className="mr-2 h-4 w-4" />
                     Manage Account
                   </Button>
@@ -194,24 +201,24 @@ export default function SettingsPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={user?.emailAddresses[0]?.emailAddress || ""}
-                  disabled
-                  className="bg-muted"
-                />
-                <p className="text-sm text-muted-foreground">
-                  Email cannot be changed here. Visit{" "}
-                  <a 
-                    href="https://clerk.com/user" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline"
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="email"
+                    type="email"
+                    value={user?.emailAddresses[0]?.emailAddress || ""}
+                    disabled
+                    className="bg-muted flex-1"
+                  />
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleManageAccount}
                   >
-                    Clerk Dashboard
-                  </a>{" "}
-                  to update.
+                    Change
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Click "Change" to update your email address
                 </p>
               </div>
 
@@ -240,7 +247,6 @@ export default function SettingsPage() {
                     Sign Out
                   </Button>
                 </div>
-
               </div>
             </CardContent>
           </Card>
@@ -370,7 +376,6 @@ export default function SettingsPage() {
                 >
                   Delete All Data
                 </Button>
-
               </div>
             </CardContent>
           </Card>
