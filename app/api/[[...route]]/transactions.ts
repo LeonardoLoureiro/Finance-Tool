@@ -9,7 +9,7 @@ import { convertAmountFromMilliUnits, convertAmountToMilliUnits } from "@/lib/ut
 import { clerkMiddleware, getAuth } from "@hono/clerk-auth";
 import { zValidator } from "@hono/zod-validator";
 import { createId } from "@paralleldrive/cuid2";
-import { parse, subDays } from "date-fns";
+import { eachDayOfInterval, format, parse, subDays } from "date-fns";
 import { and, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
@@ -144,7 +144,7 @@ const app = new Hono()
         ? parse(to, "yyyy-MM-dd", new Date())
         : defaultTo;
 
-      // Get daily aggregated data
+      // aggregate data from db by days
       const dailyData = await db
         .select({
           date: sql<string>`DATE(${transactions.date})`,
@@ -156,8 +156,11 @@ const app = new Hono()
         .innerJoin(accounts, eq(transactions.accountId, accounts.id))
         .where(
           and(
-            accountId ? eq(transactions.accountId, accountId) : undefined,
+            // Check userId through accounts table (since transactions doesn't have userId)
             eq(accounts.userId, auth.userId),
+            // Optional account filter
+            accountId ? eq(transactions.accountId, accountId) : sql`TRUE`,
+            // Date range
             gte(transactions.date, startDate),
             lte(transactions.date, endDate),
           )
@@ -165,13 +168,22 @@ const app = new Hono()
         .groupBy(sql`DATE(${transactions.date})`)
         .orderBy(sql`DATE(${transactions.date})`);
 
-      // convert amounts from milliunits
-      const formattedData = dailyData.map((day) => ({
-        date: day.date,
-        income: convertAmountFromMilliUnits(day.income),
-        expenses: convertAmountFromMilliUnits(day.expenses),
-        count: Number(day.count),
-      }));
+        // fill in blanks, if a day has no data then simply fill 
+        // it with 0s. Users prefer "nothing happened" than 
+        // "missing data".
+        const dateRange = eachDayOfInterval({ start: startDate, end: endDate });
+        const formattedData = dateRange.map(date => {
+          const dateStr = format(date, 'yyyy-MM-dd');
+          const existing = dailyData.find(d => d.date === dateStr);
+          
+          return {
+            date: dateStr,
+            // convert amounts from milliunits
+            income: existing ? convertAmountFromMilliUnits(existing.income) : 0,
+            expenses: existing ? convertAmountFromMilliUnits(existing.expenses) : 0,
+            count: existing ? Number(existing.count) : 0,
+        };
+      });
 
       return context.json({ 
         data: formattedData,

@@ -2,52 +2,75 @@
 
 import { CategoryPieChart } from "@/components/charts/pie-charts";
 import { TrendChart } from "@/components/charts/trend-charts";
+import { DatePicker } from "@/components/date-picker";
 import { ExpensesCard } from "@/components/expenses-card";
 import { IncomeCard } from "@/components/income-card";
 import { RemainingCard } from "@/components/remaining-card";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useGetAccounts } from "@/features/accounts/api/use-get-accounts";
 import { useGetSummary } from "@/features/summary/api/use-get-summary";
-import { useGetTransactions } from "@/features/transactions/api/use-get-transactions";
-import { convertAmountFromMilliUnits } from "@/lib/utils";
-import { format } from "date-fns";
+import { useGetDailyTransactions } from "@/features/transactions/api/use-get-daily-transactions";
+import { endOfDay, format, startOfDay, subDays } from "date-fns";
+import { RefreshCw } from "lucide-react";
+import { useState } from "react";
+
+type DateRange = {
+  from: Date | undefined;
+  to: Date | undefined;
+};
 
 export default function Home() {
-  const { data: summaryData, isLoading: isSummaryLoading } = useGetSummary({ type: "all" });
+  // State for filters
+  const [selectedAccountId, setSelectedAccountId] = useState<string | undefined>("all");
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: subDays(new Date(), 30),
+    to: new Date(),
+  });
+
+  // Calculate date range
+  const fromDate = dateRange.from ? format(startOfDay(dateRange.from), "yyyy-MM-dd") : undefined;
+  const toDate = dateRange.to ? format(endOfDay(dateRange.to), "yyyy-MM-dd") : undefined;
+
+  // Fetch accounts for dropdown
+  const { data: accountsData, isLoading: isAccountsLoading } = useGetAccounts();
+
+  // Fetch summary with filters
+  const { data: summaryData, isLoading: isSummaryLoading } = useGetSummary({
+    type: "all",
+    from: fromDate,
+    to: toDate,
+    accountId: selectedAccountId !== "all" ? selectedAccountId : undefined,
+  });
+
+  // Fetch daily aggregated data with filters
+  const { data: dailyData, isLoading: isDailyLoading } = useGetDailyTransactions({
+    from: fromDate,
+    to: toDate,
+    accountId: selectedAccountId !== "all" ? selectedAccountId : undefined,
+  });
 
   const current = summaryData?.data.summary.currentPeriod;
   const changes = summaryData?.data.summary.changes;
   const period = summaryData?.data.period;
   const categories = summaryData?.data.categories.currentPeriod.categories;
 
-  const fromDate = period?.from ? format(new Date(period.from), "yyyy-MM-dd") : undefined;
-  const toDate = period?.to ? format(new Date(period.to), "yyyy-MM-dd") : undefined;
+  // Use the pre-aggregated daily data directly
+  // The API already returns data with all dates filled and amounts converted
+  const trendData = dailyData?.data?.map((item: any) => ({
+    date: item.date,
+    income: item.income,
+    expenses: item.expenses,
+    count: item.count,
+  })) || [];
 
-  const { data: transactions, isLoading: isTransactionsLoading } = useGetTransactions({
-    from: fromDate,
-    to: toDate,
-  });
-
-  // organise data for chart now
-  const trendData = (transactions || []).reduce((acc: any[], transaction: any) => {
-    const date = format(new Date(transaction.date), "yyyy-MM-dd");
-    const existing = acc.find((item) => item.date === date);
-    const amount = convertAmountFromMilliUnits(transaction.amount);
-
-    if (existing) {
-      if (amount > 0) {
-        existing.income += amount;
-      } else {
-        existing.expenses += Math.abs(amount);
-      }
-    } else {
-      acc.push({
-        date,
-        income: amount > 0 ? amount : 0,
-        expenses: amount < 0 ? Math.abs(amount) : 0,
-      });
-    }
-    return acc;
-  }, []);
-
+  // Category data for pie chart (only expenses)
   const categoryData = categories
     ? categories
         .filter((cat: { total: number }) => cat.total < 0)
@@ -57,26 +80,78 @@ export default function Home() {
         }))
     : [];
 
-  const dateRange = period
-    ? `${format(new Date(period.from), "MMM d")} - ${format(new Date(period.to), "MMM d, yyyy")}`
+  const dateRangeDisplay = dateRange.from && dateRange.to
+    ? `${format(dateRange.from, "MMM d")} - ${format(dateRange.to, "MMM d, yyyy")}`
     : "";
 
-  const isLoading = isSummaryLoading || isTransactionsLoading;
+  const isLoading = isSummaryLoading || isDailyLoading || isAccountsLoading;
+
+  // Reset filters
+  const handleReset = () => {
+    setSelectedAccountId("all");
+    setDateRange({
+      from: subDays(new Date(), 30),
+      to: new Date(),
+    });
+  };
 
   return (
     <div className="flex flex-col items-center px-6 pt-6">
+      {/* filters */}
+      <div className="flex flex-wrap items-center gap-3 w-full max-w-4xl mb-6">
+        {/* account filter */}
+        <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="All Accounts" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Accounts</SelectItem>
+            {accountsData?.map((account: any) => (
+              <SelectItem key={account.id} value={account.id}>
+                {account.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* date range Picker */}
+        <DatePicker
+          mode="range"
+          value={dateRange}
+          onChange={(range) => {
+            if (range && typeof range === "object" && "from" in range && "to" in range) {
+              setDateRange(range as DateRange);
+            }
+          }}
+          dateFormat="MMM d, yyyy"
+          placeholder="Select date range"
+          className="w-[280px]"
+        />
+
+        {/* reset Button */}
+        <Button variant="outline" size="sm" onClick={handleReset} className="h-9">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Reset
+        </Button>
+
+        {/* Date range display */}
+        <span className="text-sm text-muted-foreground ml-auto">
+          {dateRangeDisplay || "Select a date range"}
+        </span>
+      </div>
+
       {/* Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 max-w-4xl w-full">
         <RemainingCard
           amount={current?.net || 0}
-          dateRange={dateRange}
+          dateRange={dateRangeDisplay}
           change={changes ? { amount: changes.net, percent: changes.netPercent } : undefined}
           isLoading={isLoading}
           variant="default"
         />
         <IncomeCard
           amount={current?.income || 0}
-          dateRange={dateRange}
+          dateRange={dateRangeDisplay}
           change={changes ? { amount: changes.income, percent: changes.incomePercent } : undefined}
           isLoading={isLoading}
           variant="default"
@@ -84,7 +159,7 @@ export default function Home() {
         />
         <ExpensesCard
           amount={current?.expenses || 0}
-          dateRange={dateRange}
+          dateRange={dateRangeDisplay}
           change={changes ? { amount: changes.expenses, percent: changes.expensesPercent } : undefined}
           isLoading={isLoading}
           variant="default"
@@ -98,8 +173,8 @@ export default function Home() {
           <TrendChart data={trendData} isLoading={isLoading} />
         </div>
         <div className="lg:col-span-1">
-          <CategoryPieChart 
-            data={categoryData} 
+          <CategoryPieChart
+            data={categoryData}
             isLoading={isLoading}
             defaultChartType="pie"
           />

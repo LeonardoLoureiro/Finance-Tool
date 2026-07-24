@@ -128,6 +128,7 @@ export const TransactionForm = ({
                   disabled={disabled}
                   placeholder="Select a date"
                   className={isFuture ? "border-yellow-400" : ""}
+                  mode="single"
                 />
                 {isFuture && (
                   <div className="mt-1 px-3 py-1.5 rounded-md bg-yellow-50 border border-yellow-200">
