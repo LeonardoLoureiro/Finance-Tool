@@ -3,6 +3,7 @@ import { HTTPException } from "hono/http-exception";
 import { handle } from "hono/vercel";
 import accounts from "./accounts";
 import categories from "./categories";
+import settings from "./settings";
 import summary from "./summary";
 import transactions from "./transactions";
 
@@ -22,6 +23,7 @@ app.onError((error, context) => {
 
 const routes = app
   .route("/summary", summary)
+  .route("/settings", settings)
   .route("/accounts", accounts)
   .route("/categories", categories)
   .route("/transactions", transactions);
