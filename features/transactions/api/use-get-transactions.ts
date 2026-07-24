@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { client } from "@/lib/hono";
 import { useSearchParams } from "next/navigation";
 
-export const useGetTransactions = () => {
+export const useGetTransactions = (p0?: { from: string | undefined; to: string | undefined; }) => {
   const searchParams = useSearchParams();
   const from = searchParams.get("from") || "";
   const to = searchParams.get("to") || "";

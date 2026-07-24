@@ -5,11 +5,11 @@ import {
   insertTransactionsSchema,
   transactions
 } from "@/db/schema";
-import { convertAmountToMilliUnits } from "@/lib/utils";
+import { convertAmountFromMilliUnits, convertAmountToMilliUnits } from "@/lib/utils";
 import { clerkMiddleware, getAuth } from "@hono/clerk-auth";
 import { zValidator } from "@hono/zod-validator";
 import { createId } from "@paralleldrive/cuid2";
-import { parse, subDays } from "date-fns";
+import { eachDayOfInterval, format, parse, subDays } from "date-fns";
 import { and, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
@@ -107,6 +107,92 @@ const app = new Hono()
       return context.json({ data });  
     }
 
+  )
+
+  // GET daily aggregated data. Specifically used in dashboard 
+  // where data needs to be 'compact'.
+  .get(
+    "/daily",
+    clerkMiddleware(),
+    zValidator(
+      "query",
+      z.object({
+        from: z.string().optional(),
+        to: z.string().optional(),
+        accountId: z.string().optional(),
+      })
+    ),
+    async (context) => {
+      const auth = getAuth(context);
+
+      if (!auth?.userId) {
+        throw new HTTPException(401, {
+          res: context.json({ error: "Unauthorised" }, 401),
+        });
+      }
+
+      const defaultTo = new Date();
+      const defaultFrom = subDays(defaultTo, 30);
+
+      const { from, to, accountId } = context.req.valid("query");
+      
+      const startDate = from
+        ? parse(from, "yyyy-MM-dd", new Date())
+        : defaultFrom;
+
+      const endDate = to 
+        ? parse(to, "yyyy-MM-dd", new Date())
+        : defaultTo;
+
+      // aggregate data from db by days
+      const dailyData = await db
+        .select({
+          date: sql<string>`DATE(${transactions.date})`,
+          income: sql<number>`COALESCE(SUM(CASE WHEN ${transactions.amount} > 0 THEN ${transactions.amount} ELSE 0 END), 0)`,
+          expenses: sql<number>`COALESCE(SUM(CASE WHEN ${transactions.amount} < 0 THEN ABS(${transactions.amount}) ELSE 0 END), 0)`,
+          count: sql<number>`COUNT(*)`,
+        })
+        .from(transactions)
+        .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+        .where(
+          and(
+            // Check userId through accounts table (since transactions doesn't have userId)
+            eq(accounts.userId, auth.userId),
+            // Optional account filter
+            accountId ? eq(transactions.accountId, accountId) : sql`TRUE`,
+            // Date range
+            gte(transactions.date, startDate),
+            lte(transactions.date, endDate),
+          )
+        )
+        .groupBy(sql`DATE(${transactions.date})`)
+        .orderBy(sql`DATE(${transactions.date})`);
+
+        // fill in blanks, if a day has no data then simply fill 
+        // it with 0s. Users prefer "nothing happened" than 
+        // "missing data".
+        const dateRange = eachDayOfInterval({ start: startDate, end: endDate });
+        const formattedData = dateRange.map(date => {
+          const dateStr = format(date, 'yyyy-MM-dd');
+          const existing = dailyData.find(d => d.date === dateStr);
+          
+          return {
+            date: dateStr,
+            // convert amounts from milliunits
+            income: existing ? convertAmountFromMilliUnits(existing.income) : 0,
+            expenses: existing ? convertAmountFromMilliUnits(existing.expenses) : 0,
+            count: existing ? Number(existing.count) : 0,
+        };
+      });
+
+      return context.json({ 
+        data: formattedData,
+        period: {
+          from: startDate,
+          to: endDate,
+        },
+      });
+    }
   )
 
   // get specific transaction
@@ -559,6 +645,6 @@ const app = new Hono()
 
       return context.json({ data });
     }
-  );
+  )
 
 export default app;

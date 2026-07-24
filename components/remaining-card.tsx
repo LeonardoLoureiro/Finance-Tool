@@ -1,9 +1,9 @@
 "use client";
 
-import { ArrowDownRight } from "lucide-react";
-import { SummaryCard } from "./summary-card";
+import { PiggyBank } from "lucide-react";
+import { SummaryCard } from "./ui/data-card";
 
-type ExpensesCardProps = {
+type RemainingCardProps = {
   amount: number;
   dateRange: string;
   change?: {
@@ -15,32 +15,31 @@ type ExpensesCardProps = {
   accentColor?: "green" | "red" | "blue" | "yellow" | "purple";
 };
 
-export const ExpensesCard = ({
+export const RemainingCard = ({
   amount,
   dateRange,
   change,
   isLoading = false,
   variant = "default",
-  accentColor = "red",
-}: ExpensesCardProps) => {
-  // for expenses, a negative change is good (spent less)
-  const isPositive = change ? change.amount <= 0 : true;
+  accentColor = amount >= 0 ? "green" : "red",
+}: RemainingCardProps) => {
+  const isPositive = amount >= 0;
 
   return (
     <SummaryCard
-      title="Expenses"
-      icon={<ArrowDownRight className="h-5 w-5 text-red-500" />}
+      title="Remaining"
+      icon={<PiggyBank className="h-5 w-5 text-blue-500" />}
       value={amount}
-      valueClassName="text-red-600"
+      valueClassName={isPositive ? "text-green-600" : "text-red-600"}
       subtitle={dateRange}
       variant={variant}
       accentColor={accentColor}
       trend={
         change
           ? {
-              value: Math.abs(change.amount),
+              value: change.amount,
               percent: change.percent,
-              isPositive: isPositive,
+              isPositive: change.amount >= 0,
               label: "vs last period",
             }
           : undefined
