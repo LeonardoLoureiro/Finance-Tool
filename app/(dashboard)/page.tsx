@@ -27,8 +27,8 @@ type DateRange = {
 };
 
 export default function Home() {
-  // State for filters
-  const [selectedAccountId, setSelectedAccountId] = useState<string | undefined>("all");
+  // State for filters - store the ID as a string
+  const [selectedAccountId, setSelectedAccountId] = useState<string>("all");
   const [dateRange, setDateRange] = useState<DateRange>({
     from: subDays(new Date(), 30),
     to: new Date(),
@@ -62,7 +62,6 @@ export default function Home() {
   const categories = summaryData?.data.categories.currentPeriod.categories;
 
   // Use the pre-aggregated daily data directly
-  // The API already returns data with all dates filled and amounts converted
   const trendData = dailyData?.data?.map((item: any) => ({
     date: item.date,
     income: item.income,
@@ -95,6 +94,13 @@ export default function Home() {
     });
   };
 
+  // Helper function to get account name from ID
+  const getAccountName = (accountId: string) => {
+    if (accountId === "all") return "All Accounts";
+    const account = accountsData?.find((acc: any) => acc.id === accountId);
+    return account?.name || accountId; // Fallback to ID if name not found
+  };
+
   return (
     <div className="flex flex-col items-center px-6 pt-6">
       {/* filters */}
@@ -102,7 +108,9 @@ export default function Home() {
         {/* account filter */}
         <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="All Accounts" />
+            <SelectValue placeholder="All Accounts">
+              {getAccountName(selectedAccountId)}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Accounts</SelectItem>
